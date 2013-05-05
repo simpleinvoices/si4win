@@ -1,14 +1,12 @@
-#summary ReadMe.txt included in the SI For Windows package
-
 =Simple Invoices For Windows=
 
 Simple Invoices For Windows is a combination of the simple invoices web app and a custom portable webserver. Simple Invoices For Windows
 will allow you to use or just try Simple Invoices without having to own or configure a webserver. Simple Invoices For Windows doesn't require
 you to install it to your computer, once unzipped you can move the SimpleInvoices folder anyplace on your computer or even to a USB drive to take with you to another computer.
 
-This Windows based version of Simple Invoices is maintained by John McLaren at http://TeamMC.cc/SimpleInvoices  -  john@teammc.cc
+This Windows based version of Simple Invoices is maintained by John McLaren at http://JohnsCS.com/SimpleInvoices  -  john@johnscs.com
 
-Support may be offered by emailing John or by visiting the Simple Invoices forum at http://www.simpleinvoices.org
+Support may be offered by emailing John or by visiting the Simple Invoices Google+ community at 
 
 ==Limitations & Special Considerations:==
 
@@ -73,14 +71,14 @@ Support may be offered by emailing John or by visiting the Simple Invoices forum
 
 ==Software Versions:==
         * AutoIT 3.3.8.1 - http://www.autoitscript.com
-        * Simple Invoices 2011.1- http://www.simpleinvoices.org
+        * Simple Invoices 2011.1 - http://www.simpleinvoices.org
         * PHP 5.2.17 - http://php.net
         * Apache 2.2.21 - http://httpd.apache.org
         * MySQL  5.0.96 - http://mysql.com/
 
 
 ==Changes:==
-      * 1.7.0 - 5/X/2012
+      * 1.7.0 - 
                * Changed: Updated AutoIT to 3.3.8.1
                * Changed: Updated PHPMyAdmin to 3.5.1
       	       * Changed: Downgraded MySQL to match PHP library and database server versions potentially solving some db setup issues
