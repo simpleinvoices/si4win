@@ -1,6 +1,4 @@
-#summary ReadMe.txt included in the SI For Windows package
-
-=Simple Invoices For Windows=
+# Simple Invoices For Windows
 
 Simple Invoices For Windows is a combination of the simple invoices web app and a custom portable webserver. Simple Invoices For Windows
 will allow you to use or just try Simple Invoices without having to own or configure a webserver. Simple Invoices For Windows doesn't require
