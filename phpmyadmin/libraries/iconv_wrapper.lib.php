@@ -2,8 +2,7 @@
 /* vim: set expandtab sw=4 ts=4 sts=4: */
 /**
  *
- * @version $Id: iconv_wrapper.lib.php 11986 2008-11-24 11:05:40Z nijel $
- * @package phpMyAdmin
+ * @package PhpMyAdmin
  */
 if (! defined('PHPMYADMIN')) {
     exit;
@@ -29,7 +28,7 @@ $gnu_iconv_to_aix_iconv_codepage_map = array (
     // "big5" --> "IBM-eucTW" according to http://kadesh.cepba.upc.es/mancpp/classref/ref/ITranscoder_DSC.htm
     'big5' => 'IBM-eucTW',
 
-    // Other mappings corresponding to the phpMyAdmin dropdown box when using the AllowAnywhereRecoding feature
+    // Other mappings corresponding to the phpMyAdmin dropdown box when using the charset conversion feature
     'euc-jp' => 'IBM-eucJP',
     'koi8-r' => 'IBM-eucKR',
     'ks_c_5601-1987' => 'KSC5601.1987-0',
@@ -41,23 +40,23 @@ $gnu_iconv_to_aix_iconv_codepage_map = array (
  * Wrapper around IBM AIX iconv(), whose character set naming differs
  * from the GNU version of iconv().
  *
- * @param   string   input character set
- * @param   string   output character set
- * @param   string   the string to convert
+ * @param string   input character set
+ * @param string   output character set
+ * @param string   the string to convert
  *
- * @return  mixed    converted string or FALSE on failure
+ * @return  mixed    converted string or false on failure
  *
  * @access  public
  *
- * @author  bwiberg  Björn Wiberg <Bjorn.Wiberg@its.uu.se>
  */
-function PMA_aix_iconv_wrapper($in_charset, $out_charset, $str) {
+function PMA_aix_iconv_wrapper($in_charset, $out_charset, $str)
+{
 
     global $gnu_iconv_to_aix_iconv_codepage_map;
 
     // Check for transliteration argument at the end of output character set name
     $translit_search = strpos(strtolower($out_charset), '//translit');
-    $using_translit = (!($translit_search === FALSE));
+    $using_translit = (!($translit_search === false));
 
     // Extract "plain" output character set name (without any transliteration argument)
     $out_charset_plain = ($using_translit ? substr($out_charset, 0, $translit_search) : $out_charset);

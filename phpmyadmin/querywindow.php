@@ -1,45 +1,10 @@
 <?php
 /* vim: set expandtab sw=4 ts=4 sts=4: */
 /**
- * this file is register_globals save
+ * this file is register_globals safe
  *
  * @todo    move JavaScript out of here into .js files
- * @uses    $cfg['QueryWindowDefTab']
- * @uses    $cfg['PropertiesIconic']
- * @uses    $cfg['QueryHistoryDB']
- * @uses    $cfg['Server']['user']
- * @uses    $cfg['AllowUserDropDatabase']
- * @uses    $cfg['Confirm']
- * @uses    $GLOBALS['db']
- * @uses    $GLOBALS['table']
- * @uses    $GLOBALS['strSQL']
- * @uses    $GLOBALS['strImportFiles']
- * @uses    $GLOBALS['strQuerySQLHistory']
- * @uses    $GLOBALS['strAll']
- * @uses    $GLOBALS['strChange']
- * @uses    $GLOBALS['strFormEmpty']
- * @uses    $GLOBALS['strNotNumber']
- * @uses    $GLOBALS['strNoDropDatabases']
- * @uses    $GLOBALS['strDoYouReally']
- * @uses    $GLOBALS['strQuerySQLHistory']
- * @uses    PMA_isSuperuser()
- * @uses    PMA_outBufferPre()
- * @uses    PMA_getRelationsParam()
- * @uses    PMA_isValid()
- * @uses    PMA_ifSetOr()
- * @uses    PMA_getHistory()
- * @uses    PMA_generate_common_url()
- * @uses    PMA_generate_common_hidden_inputs()
- * @uses    PMA_escapeJsString()
- * @uses    PMA_generate_html_tabs()
- * @uses    PMA_sqlQueryForm()
- * @uses    PMA_jsFormat()
- * @uses    in_array()
- * @uses    strlen()
- * @uses    preg_replace()
- * @uses    htmlspecialchars()
- * @version $Id: querywindow.php 12542 2009-06-07 11:09:13Z lem9 $
- * @package phpMyAdmin
+ * @package PhpMyAdmin
  */
 
 /**
@@ -61,9 +26,8 @@ require_once './libraries/ob.lib.php';
 PMA_outBufferPre();
 
 /**
- * load relations
+ * load relation params
  */
-require_once './libraries/relation.lib.php';
 $cfgRelation = PMA_getRelationsParam();
 
 /**
@@ -97,42 +61,30 @@ if ($no_js) {
 } else {
     $tabs = array();
     $tabs['sql']['icon']   = 'b_sql.png';
-    $tabs['sql']['text']   = $GLOBALS['strSQL'];
+    $tabs['sql']['text']   = __('SQL');
     $tabs['sql']['fragment']   = '#';
-    $tabs['sql']['attr']   = 'onclick="javascript:PMA_querywindowCommit(\'sql\');return false;"';
+    $tabs['sql']['attr']   = 'onclick="PMA_querywindowCommit(\'sql\');return false;"';
     $tabs['sql']['active'] = (bool) ($querydisplay_tab == 'sql');
     $tabs['import']['icon']   = 'b_import.png';
-    $tabs['import']['text']   = $GLOBALS['strImportFiles'];
+    $tabs['import']['text']   = __('Import files');
     $tabs['import']['fragment']   = '#';
-    $tabs['import']['attr']   = 'onclick="javascript:PMA_querywindowCommit(\'files\');return false;"';
+    $tabs['import']['attr']   = 'onclick="PMA_querywindowCommit(\'files\');return false;"';
     $tabs['import']['active'] = (bool) ($querydisplay_tab == 'files');
     $tabs['history']['icon']   = 'b_bookmark.png';
-    $tabs['history']['text']   = $GLOBALS['strQuerySQLHistory'];
+    $tabs['history']['text']   = __('SQL history');
     $tabs['history']['fragment']   = '#';
-    $tabs['history']['attr']   = 'onclick="javascript:PMA_querywindowCommit(\'history\');return false;"';
+    $tabs['history']['attr']   = 'onclick="PMA_querywindowCommit(\'history\');return false;"';
     $tabs['history']['active'] = (bool) ($querydisplay_tab == 'history');
 
     if ($GLOBALS['cfg']['QueryWindowDefTab'] == 'full') {
-        $tabs['all']['text']   = $GLOBALS['strAll'];
+        $tabs['all']['text']   = __('All');
         $tabs['all']['fragment']   = '#';
-        $tabs['all']['attr']   = 'onclick="javascript:PMA_querywindowCommit(\'full\');return false;"';
+        $tabs['all']['attr']   = 'onclick="PMA_querywindowCommit(\'full\');return false;"';
         $tabs['all']['active'] = (bool) ($querydisplay_tab == 'full');
     }
 }
 
-if ($GLOBALS['cfg']['PropertiesIconic']) {
-    $titles['Change'] =
-         '<img class="icon" width="16" height="16" src="' . $pmaThemeImage
-        . 'b_edit.png" alt="' . $GLOBALS['strChange'] . '" title="' . $GLOBALS['strChange']
-        . '" />';
-
-    if ('both' === $GLOBALS['cfg']['PropertiesIconic']) {
-        $titles['Change'] .= $GLOBALS['strChange'];
-    }
-} else {
-    $titles['Change'] = $GLOBALS['strChange'];
-}
-
+$titles['Change'] = PMA_getIcon('b_edit.png', __('Change'));
 $url_query = PMA_generate_common_url($db, $table);
 
 if (! empty($sql_query)) {
@@ -143,11 +95,11 @@ if ($no_js) {
     // ... we redirect to appropriate query sql page
     // works only full if $db and $table is also stored/grabbed from $_COOKIE
     if (strlen($table)) {
-        require './tbl_sql.php';
+        include './tbl_sql.php';
     } elseif (strlen($db)) {
-        require './db_sql.php';
+        include './db_sql.php';
     } else {
-        require './server_sql.php';
+        include './server_sql.php';
     }
     exit;
 }
@@ -166,19 +118,16 @@ $sql_query = '';
  * prepare JavaScript functionality
  */
 $js_include[] = 'common.js';
-$js_include[] = 'functions.js';
 $js_include[] = 'querywindow.js';
 
 if (PMA_isValid($_REQUEST['auto_commit'], 'identical', 'true')) {
     $js_events[] = array(
-        'object'    => 'window',
         'event'     => 'load',
         'function'  => 'PMA_queryAutoCommit',
     );
 }
 if (PMA_isValid($_REQUEST['init'])) {
     $js_events[] = array(
-        'object'    => 'window',
         'event'     => 'load',
         'function'  => 'PMA_querywindowResize',
     );
@@ -186,7 +135,6 @@ if (PMA_isValid($_REQUEST['init'])) {
 // always set focus to the textarea
 if ($querydisplay_tab == 'sql' || $querydisplay_tab == 'full') {
     $js_events[] = array(
-        'object'    => 'window',
         'event'     => 'load',
         'function'  => 'PMA_querywindowSetFocus',
     );
@@ -218,8 +166,8 @@ $_sql_history = PMA_getHistory($GLOBALS['cfg']['Server']['user']);
 if (! empty($_sql_history)
  && ($querydisplay_tab == 'history' || $querydisplay_tab == 'full')) {
     $tab = $querydisplay_tab != 'full' ? 'sql' : 'full';
-    echo $GLOBALS['strQuerySQLHistory'] . ':<br />' . "\n"
-        .'<ul>';
+    echo __('SQL history') . ':<br />'
+        . '<ul>';
     foreach ($_sql_history as $query) {
         echo '<li>' . "\n";
 

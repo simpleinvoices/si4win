@@ -1,7 +1,7 @@
 <?php
 /* vim: set expandtab sw=4 ts=4 sts=4: */
 /**
- * GLOBAL Plugin function (Garvin Hicking).
+ * GLOBAL Plugin function.
  * ---------------
  *
  * THIS FILE PROVIDES BASIC FUNCTIONS TO USE IN OTHER PLUGINS!
@@ -19,22 +19,24 @@
  *
  * Please provide a comment for your function, what it does and what parameters are available.
  *
- * @version $Id: global.inc.php 11986 2008-11-24 11:05:40Z nijel $
- * @package phpMyAdmin-Transformation
+ * @package PhpMyAdmin-Transformation
  */
 
 /**
  *
  */
-function PMA_transformation_global_plain($buffer, $options = array(), $meta = '') {
+function PMA_transformation_global_plain($buffer, $options = array(), $meta = '')
+{
     return htmlspecialchars($buffer);
 }
 
-function PMA_transformation_global_html($buffer, $options = array(), $meta = '') {
+function PMA_transformation_global_html($buffer, $options = array(), $meta = '')
+{
     return $buffer;
 }
 
-function PMA_transformation_global_html_replace($buffer, $options = array(), $meta = '') {
+function PMA_transformation_global_html_replace($buffer, $options = array(), $meta = '')
+{
     if (!isset($options['string'])) {
         $options['string'] = '';
     }

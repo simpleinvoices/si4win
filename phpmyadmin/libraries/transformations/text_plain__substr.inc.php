@@ -1,14 +1,21 @@
 <?php
 /* vim: set expandtab sw=4 ts=4 sts=4: */
 /**
- * @package phpMyAdmin-Transformation
- * @version $Id: text_plain__substr.inc.php 11973 2008-11-24 09:30:37Z nijel $
+ * @package PhpMyAdmin-Transformation
  */
+
+function PMA_transformation_text_plain__substr_info()
+{
+    return array(
+        'info' => __('Displays a part of a string. The first option is the number of characters to skip from the beginning of the string (Default 0). The second option is the number of characters to return (Default: until end of string). The third option is the string to append and/or prepend when truncation occurs (Default: "...").'),
+        );
+}
 
 /**
  *
  */
-function PMA_transformation_text_plain__substr($buffer, $options = array(), $meta = '') {
+function PMA_transformation_text_plain__substr($buffer, $options = array(), $meta = '')
+{
     // possibly use a global transform and feed it with special options:
     // include './libraries/transformations/global.inc.php';
 

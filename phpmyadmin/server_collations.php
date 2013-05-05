@@ -2,8 +2,7 @@
 /* vim: set expandtab sw=4 ts=4 sts=4: */
 /**
  *
- * @version $Id: server_collations.php 11986 2008-11-24 11:05:40Z nijel $
- * @package phpMyAdmin
+ * @package PhpMyAdmin
  */
 
 /**
@@ -35,9 +34,9 @@ require './libraries/server_links.inc.php';
  */
 echo '<h2>' . "\n"
    . '    ' . ($GLOBALS['cfg']['MainPageIconic']
-    ? '<img class="icon" src="'. $GLOBALS['pmaThemeImage'] . 's_asci.png" alt="" />'
+    ? PMA_getImage('s_asci.png')
     : '')
-   . '' . $strCharsetsAndCollations . "\n"
+   . '' . __('Character Sets and Collations') . "\n"
    . '</h2>' . "\n";
 
 /**
@@ -50,21 +49,21 @@ require_once './libraries/mysql_charsets.lib.php';
  * Outputs the result
  */
 echo '<div id="div_mysql_charset_collations">' . "\n"
-   . '<table class="data">' . "\n"
-   . '<tr><th>' . $strCollation . '</th>' . "\n"
-   . '    <th>' . $strDescription . '</th>' . "\n"
+   . '<table class="data noclick">' . "\n"
+   . '<tr><th>' . __('Collation') . '</th>' . "\n"
+   . '    <th>' . __('Description') . '</th>' . "\n"
    . '</tr>' . "\n";
 
 $i = 0;
-$table_row_count = count($mysql_charsets) + $mysql_collations_count;
+$table_row_count = count($mysql_charsets) + count($mysql_collations);
 
 foreach ($mysql_charsets as $current_charset) {
     if ($i >= $table_row_count / 2) {
         $i = 0;
         echo '</table>' . "\n"
-           . '<table class="data">' . "\n"
-           . '<tr><th>' . $strCollation . '</th>' . "\n"
-           . '    <th>' . $strDescription . '</th>' . "\n"
+           . '<table class="data noclick">' . "\n"
+           . '<tr><th>' . __('Collation') . '</th>' . "\n"
+           . '    <th>' . __('Description') . '</th>' . "\n"
            . '</tr>' . "\n";
     }
     $i++;
@@ -96,6 +95,6 @@ unset($table_row_count);
 echo '</table>' . "\n"
    . '</div>' . "\n";
 
-require_once './libraries/footer.inc.php';
+require './libraries/footer.inc.php';
 
 ?>

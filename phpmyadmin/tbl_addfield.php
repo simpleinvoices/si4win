@@ -2,18 +2,14 @@
 /* vim: set expandtab sw=4 ts=4 sts=4: */
 /**
  *
- * @version $Id: tbl_addfield.php 13377 2010-02-03 10:55:03Z helmo $
- * @package phpMyAdmin
+ * @package PhpMyAdmin
  */
 
 /**
  * Get some core libraries
  */
 require_once './libraries/common.inc.php';
-require_once './libraries/Table.class.php';
 
-$GLOBALS['js_include'][] = 'functions.js';
-$GLOBALS['js_include'][] = 'mootools-more.js';
 require_once './libraries/header.inc.php';
 
 // Check parameters
@@ -166,11 +162,10 @@ if (isset($_REQUEST['do_save_data'])) {
     $result = PMA_DBI_try_query($sql_query);
 
     if ($result === true) {
-        // garvin: If comments were sent, enable relation stuff
-        require_once './libraries/relation.lib.php';
-        require_once './libraries/transformations.lib.php';
+        // If comments were sent, enable relation stuff
+        include_once './libraries/transformations.lib.php';
 
-        // garvin: Update comment table for mime types [MIME]
+        // Update comment table for mime types [MIME]
         if (isset($_REQUEST['field_mimetype'])
          && is_array($_REQUEST['field_mimetype'])
          && $cfg['BrowseMIME']) {
@@ -187,13 +182,19 @@ if (isset($_REQUEST['do_save_data'])) {
         }
 
         // Go back to the structure sub-page
-        $message = PMA_Message::success('strTableAlteredSuccessfully');
+        $message = PMA_Message::success(__('Table %1$s has been altered successfully'));
         $message->addParam($table);
+
+        if ( $GLOBALS['is_ajax_request'] == true) {
+            $extra_data['sql_query'] = PMA_showMessage(null, $sql_query);
+            PMA_ajaxResponse($message, $message->isSuccess(), $extra_data);
+        }
+
         $active_page = 'tbl_structure.php';
-        require './tbl_structure.php';
+        include './tbl_structure.php';
     } else {
         PMA_mysqlDie('', '', '', $err_url, false);
-        // garvin: An error happened while inserting/updating a table definition.
+        // An error happened while inserting/updating a table definition.
         // to prevent total loss of that data, we embed the form once again.
         // The variable $regenerate will be used to restore data in libraries/tbl_properties.inc.php
         $num_fields = $_REQUEST['orig_num_fields'];
@@ -214,21 +215,23 @@ if ($abort == false) {
     /**
      * Gets tables informations
      */
-    require_once './libraries/tbl_common.php';
-    require_once './libraries/tbl_info.inc.php';
+    include_once './libraries/tbl_common.php';
+    include_once './libraries/tbl_info.inc.php';
     /**
      * Displays top menu links
      */
     $active_page = 'tbl_structure.php';
-    require_once './libraries/tbl_links.inc.php';
+    if ($GLOBALS['is_ajax_request'] != true) {
+        include_once './libraries/tbl_links.inc.php';
+    }
     /**
      * Display the form
      */
     $action = 'tbl_addfield.php';
-    require_once './libraries/tbl_properties.inc.php';
+    include_once './libraries/tbl_properties.inc.php';
 
     // Diplays the footer
-    require_once './libraries/footer.inc.php';
+    include './libraries/footer.inc.php';
 }
 
 ?>

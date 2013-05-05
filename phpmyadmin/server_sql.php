@@ -2,8 +2,7 @@
 /* vim: set expandtab sw=4 ts=4 sts=4: */
 /**
  *
- * @version $Id: server_sql.php 11986 2008-11-24 11:05:40Z nijel $
- * @package phpMyAdmin
+ * @package PhpMyAdmin
  */
 
 /**
@@ -15,6 +14,11 @@ require_once './libraries/common.inc.php';
  * Does the common work
  */
 $GLOBALS['js_include'][] = 'functions.js';
+$GLOBALS['js_include'][] = 'makegrid.js';
+$GLOBALS['js_include'][] = 'sql.js';
+$GLOBALS['js_include'][] = 'codemirror/lib/codemirror.js';
+$GLOBALS['js_include'][] = 'codemirror/mode/mysql/mysql.js';
+
 require_once './libraries/server_common.inc.php';
 require_once './libraries/sql_query_form.lib.php';
 
@@ -33,5 +37,5 @@ PMA_sqlQueryForm();
 /**
  * Displays the footer
  */
-require_once './libraries/footer.inc.php';
+require './libraries/footer.inc.php';
 ?>

@@ -7,32 +7,9 @@
  * fills tooltip arrays and provides $tables, $num_tables, $is_show_stats
  * and $db_is_information_schema
  *
- * staybyte: speedup view on locked tables - 11 June 2001
+ * speedup view on locked tables
  *
- * @uses    $cfg['ShowStats']
- * @uses    $cfg['ShowTooltip']
- * @uses    $cfg['ShowTooltipAliasTB']
- * @uses    $cfg['SkipLockedTables']
- * @uses    $GLOBALS['db']
- * @uses    PMA_fillTooltip()
- * @uses    PMA_checkParameters()
- * @uses    PMA_escape_mysql_wildcards()
- * @uses    PMA_DBI_query()
- * @uses    PMA_backquote()
- * @uses    PMA_DBI_num_rows()
- * @uses    PMA_DBI_fetch_row()
- * @uses    PMA_DBI_fetch_assoc()
- * @uses    PMA_DBI_free_result()
- * @uses    PMA_DBI_get_tables_full()
- * @uses    PMA_isValid()
- * @uses    preg_match()
- * @uses    preg_quote()
- * @uses    uksort()
- * @uses    strnatcasecmp()
- * @uses    count()
- * @uses    addslashes()
- * @version $Id: db_info.inc.php 12588 2009-06-20 16:36:58Z lem9 $
- * @package phpMyAdmin
+ * @package PhpMyAdmin
  */
 if (! defined('PHPMYADMIN')) {
     exit;
@@ -58,16 +35,25 @@ $pos = $_SESSION['tmp_user_values']['table_limit_offset'];
 /**
  * fills given tooltip arrays
  *
- * @uses    $cfg['ShowTooltipAliasTB']
- * @uses    $GLOBALS['strStatCreateTime']
- * @uses    PMA_localisedDate()
- * @uses    strtotime()
- * @param   array   $tooltip_truename   tooltip data
- * @param   array   $tooltip_aliasname  tooltip data
- * @param   array   $table              tabledata
+ * @param array   $tooltip_truename   tooltip data
+ * @param array   $tooltip_aliasname  tooltip data
+ * @param array   $table              tabledata
  */
 function PMA_fillTooltip(&$tooltip_truename, &$tooltip_aliasname, $table)
 {
+    if (strstr($table['Comment'], '; InnoDB free') === false) {
+        if (!strstr($table['Comment'], 'InnoDB free') === false) {
+            // here we have just InnoDB generated part
+            $table['Comment'] = '';
+        }
+    } else {
+        // remove InnoDB comment from end, just the minimal part (*? is non greedy)
+        $table['Comment'] = preg_replace('@; InnoDB free:.*?$@', '', $table['Comment']);
+    }
+    // views have VIEW as comment so it's not a real comment put by a user
+    if ('VIEW' == $table['Comment']) {
+        $table['Comment'] = '';
+    }
     if (empty($table['Comment'])) {
         $table['Comment'] = $table['Name'];
     } else {
@@ -76,7 +62,7 @@ function PMA_fillTooltip(&$tooltip_truename, &$tooltip_aliasname, $table)
     }
 
     if ($GLOBALS['cfg']['ShowTooltipAliasTB']
-     && $GLOBALS['cfg']['ShowTooltipAliasTB'] != 'nested') {
+     && $GLOBALS['cfg']['ShowTooltipAliasTB'] !== 'nested') {
         $tooltip_truename[$table['Name']] = $table['Comment'];
         $tooltip_aliasname[$table['Name']] = $table['Name'];
     } else {
@@ -85,17 +71,17 @@ function PMA_fillTooltip(&$tooltip_truename, &$tooltip_aliasname, $table)
     }
 
     if (isset($table['Create_time']) && !empty($table['Create_time'])) {
-        $tooltip_aliasname[$table['Name']] .= ', ' . $GLOBALS['strStatCreateTime']
+        $tooltip_aliasname[$table['Name']] .= ', ' . __('Creation')
              . ': ' . PMA_localisedDate(strtotime($table['Create_time']));
     }
 
     if (! empty($table['Update_time'])) {
-        $tooltip_aliasname[$table['Name']] .= ', ' . $GLOBALS['strStatUpdateTime']
+        $tooltip_aliasname[$table['Name']] .= ', ' . __('Last update')
              . ': ' . PMA_localisedDate(strtotime($table['Update_time']));
     }
 
     if (! empty($table['Check_time'])) {
-        $tooltip_aliasname[$table['Name']] .= ', ' . $GLOBALS['strStatCheckTime']
+        $tooltip_aliasname[$table['Name']] .= ', ' . __('Last check')
              . ': ' . PMA_localisedDate(strtotime($table['Check_time']));
     }
 }
@@ -112,7 +98,7 @@ $is_show_stats = $cfg['ShowStats'];
  */
 $db_is_information_schema = false;
 
-if ($db == 'information_schema') {
+if (PMA_is_system_schema($db)) {
     $is_show_stats = false;
     $db_is_information_schema = true;
 }
@@ -154,15 +140,15 @@ if (true === $cfg['SkipLockedTables']) {
                 null, PMA_DBI_QUERY_STORE);
             if ($db_info_result && PMA_DBI_num_rows($db_info_result) > 0) {
                 while ($tmp = PMA_DBI_fetch_row($db_info_result)) {
-                    if (!isset($sot_cache[$tmp[0]])) {
+                    if (! isset($sot_cache[$tmp[0]])) {
                         $sts_result  = PMA_DBI_query(
                             'SHOW TABLE STATUS FROM ' . PMA_backquote($db)
-                             . ' LIKE \'' . addslashes($tmp[0]) . '\';');
+                             . ' LIKE \'' . PMA_sqlAddSlashes($tmp[0], true) . '\';');
                         $sts_tmp     = PMA_DBI_fetch_assoc($sts_result);
                         PMA_DBI_free_result($sts_result);
                         unset($sts_result);
 
-                        if (!isset($sts_tmp['Type']) && isset($sts_tmp['Engine'])) {
+                        if (! isset($sts_tmp['Type']) && isset($sts_tmp['Engine'])) {
                             $sts_tmp['Type'] =& $sts_tmp['Engine'];
                         }
 
@@ -213,7 +199,8 @@ if (! isset($sot_ready)) {
         );
 
         // Make sure the sort type is implemented
-        if ($sort = $sortable_name_mappings[$_REQUEST['sort']]) {
+        if (isset($sortable_name_mappings[$_REQUEST['sort']])) {
+            $sort = $sortable_name_mappings[$_REQUEST['sort']];
             if ($_REQUEST['sort_order'] == 'DESC') {
                 $sort_order = 'DESC';
             }
@@ -271,6 +258,9 @@ unset($each_table, $tbl_group_sql, $db_info_result);
 
 /**
  * Displays top menu links
+ * If in an Ajax request, we do not need to show this
  */
-require './libraries/db_links.inc.php';
+if ($GLOBALS['is_ajax_request'] != true) {
+    include './libraries/db_links.inc.php';
+}
 ?>

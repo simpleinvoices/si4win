@@ -1,9 +1,15 @@
 <?php
 /* vim: set expandtab sw=4 ts=4 sts=4: */
 /**
- * @package phpMyAdmin-Transformation
- * @version $Id: text_plain__longToIpv4.inc.php 12848 2009-08-21 07:38:43Z nijel $
+ * @package PhpMyAdmin-Transformation
  */
+
+function PMA_transformation_text_plain__longToIpv4_info()
+{
+    return array(
+        'info' => __('Converts an (IPv4) Internet network address into a string in Internet standard dotted format.'),
+        );
+}
 
 /**
  * returns IPv4 address

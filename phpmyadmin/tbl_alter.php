@@ -1,22 +1,19 @@
 <?php
 /* vim: set expandtab sw=4 ts=4 sts=4: */
 /**
- * Alter one or more table columns/fields
+ * Alter one or more table columns
  *
  * linked from table_structure, uses libraries/tbl_properties.inc.php to display
  * form and handles this form data
  *
- * @version $Id: tbl_alter.php 13116 2009-11-13 11:14:10Z lem9 $
- * @package phpMyAdmin
+ * @package PhpMyAdmin
  */
 
 /**
  * Gets some core libraries
  */
 require_once './libraries/common.inc.php';
-require_once './libraries/Table.class.php';
 
-$GLOBALS['js_include'][] = 'functions.js';
 require_once './libraries/header.inc.php';
 
 // Check parameters
@@ -95,20 +92,18 @@ if (isset($_REQUEST['do_save_data'])) {
     // To allow replication, we first select the db to use and then run queries
     // on this db.
     PMA_DBI_select_db($db) or PMA_mysqlDie(PMA_DBI_getError(), 'USE ' . PMA_backquote($db) . ';', '', $err_url);
-    // Optimization fix - 2 May 2001 - Robbat2
     $sql_query = 'ALTER TABLE ' . PMA_backquote($table) . ' ' . implode(', ', $changes) . $key_query;
     $result    = PMA_DBI_try_query($sql_query);
 
     if ($result !== false) {
-        $message = PMA_Message::success('strTableAlteredSuccessfully');
+        $message = PMA_Message::success(__('Table %1$s has been altered successfully'));
         $message->addParam($table);
         $btnDrop = 'Fake';
 
         /**
          * If comments were sent, enable relation stuff
          */
-        require_once './libraries/relation.lib.php';
-        require_once './libraries/transformations.lib.php';
+        include_once './libraries/transformations.lib.php';
 
         // updaet field names in relation
         if (isset($_REQUEST['field_orig']) && is_array($_REQUEST['field_orig'])) {
@@ -135,11 +130,16 @@ if (isset($_REQUEST['do_save_data'])) {
             }
         }
 
+        if ( $_REQUEST['ajax_request'] == true) {
+            $extra_data['sql_query'] = PMA_showMessage(null, $sql_query);
+            PMA_ajaxResponse($message, $message->isSuccess(), $extra_data);
+        }
+
         $active_page = 'tbl_structure.php';
-        require './tbl_structure.php';
+        include './tbl_structure.php';
     } else {
         PMA_mysqlDie('', '', '', $err_url, false);
-        // garvin: An error happened while inserting/updating a table definition.
+        // An error happened while inserting/updating a table definition.
         // to prevent total loss of that data, we embed the form once again.
         // The variable $regenerate will be used to restore data in libraries/tbl_properties.inc.php
         if (isset($_REQUEST['orig_field'])) {
@@ -156,6 +156,10 @@ if (isset($_REQUEST['do_save_data'])) {
  * $selected comes from multi_submits.inc.php
  */
 if ($abort == false) {
+    if ($_REQUEST['ajax_request'] != true) {
+        include_once './libraries/tbl_links.inc.php';
+    }
+
     if (! isset($selected)) {
         PMA_checkParameters(array('field'));
         $selected[]   = $_REQUEST['field'];
@@ -168,10 +172,7 @@ if ($abort == false) {
      * @todo optimize in case of multiple fields to modify
      */
     for ($i = 0; $i < $selected_cnt; $i++) {
-        $_REQUEST['field'] = PMA_sqlAddslashes($selected[$i], true);
-        $result        = PMA_DBI_query('SHOW FULL FIELDS FROM ' . PMA_backquote($table) . ' FROM ' . PMA_backquote($db) . ' LIKE \'' . $_REQUEST['field'] . '\';');
-        $fields_meta[] = PMA_DBI_fetch_assoc($result);
-        PMA_DBI_free_result($result);
+        $fields_meta[] = PMA_DBI_get_columns($db, $table, $selected[$i], true);
     }
     $num_fields  = count($fields_meta);
     $action      = 'tbl_alter.php';
@@ -180,14 +181,14 @@ if ($abort == false) {
     // For now, this is done to obtain MySQL 4.1.2+ new TIMESTAMP options
     // and to know when there is an empty DEFAULT value.
     // Later, if the analyser returns more information, it
-    // could be executed to replace the info given by SHOW FULL FIELDS FROM.
+    // could be executed to replace the info given by SHOW FULL COLUMNS FROM.
     /**
      * @todo put this code into a require()
-     * or maybe make it part of PMA_DBI_get_fields();
+     * or maybe make it part of PMA_DBI_get_columns();
      */
 
     // We also need this to correctly learn if a TIMESTAMP is NOT NULL, since
-    // SHOW FULL FIELDS says NULL and SHOW CREATE TABLE says NOT NULL (tested
+    // SHOW FULL COLUMNS says NULL and SHOW CREATE TABLE says NOT NULL (tested
     // in MySQL 4.0.25).
 
     $show_create_table = PMA_DBI_fetch_value('SHOW CREATE TABLE ' . PMA_backquote($db) . '.' . PMA_backquote($table), 0, 1);
@@ -196,12 +197,12 @@ if ($abort == false) {
     /**
      * Form for changing properties.
      */
-    require './libraries/tbl_properties.inc.php';
+    include './libraries/tbl_properties.inc.php';
 }
 
 
 /**
  * Displays the footer
  */
-require_once './libraries/footer.inc.php';
+require './libraries/footer.inc.php';
 ?>

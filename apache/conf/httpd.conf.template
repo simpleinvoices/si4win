@@ -43,7 +43,7 @@ ServerRoot "!TEAMMCPATH!\apache"
 # prevent Apache from glomming onto all bound IP addresses.
 #
 #Listen 12.34.56.78:80
-Listen !TEAMMCADDRESSAPACHELISTEN!!TEAMMCWEBPORT!
+Listen !TEAMMCWEBADDRESS_HTTPD!!TEAMMCWEBPORT!
 
 #
 # Dynamic Shared Object (DSO) Support
@@ -169,7 +169,7 @@ Group daemon
 #
 # If your host doesn't have a registered DNS name, enter its IP address here.
 #
-ServerName !TEAMMCADDRESS!:!TEAMMCWEBPORT!
+ServerName !TEAMMCWEBADDRESS_HTTPD!!TEAMMCWEBPORT!
 
 #
 # DocumentRoot: The directory out of which you will serve your
@@ -500,15 +500,6 @@ PHPIniDir "!TEAMMCPATH!/php"
 Alias /phpmyadmin "!TEAMMCPATH!/phpmyadmin/"
 
 <Directory "!TEAMMCPATH!/phpmyadmin/">
-    AllowOverride All
-    Order allow,deny
-    Allow from 127.0.0.1	
-</Directory>
-
-Alias /scripts "!TEAMMCPATH!/scripts/"
-
-# Portable Web Server Scripts
-<Directory "!TEAMMCPATH!/scripts/">
     AllowOverride All
     Order allow,deny
     Allow from 127.0.0.1	

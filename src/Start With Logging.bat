@@ -1,0 +1,1 @@
+start ..\SimpleInvoices.exe -debuglogworkingdir

@@ -4,17 +4,11 @@
  * Ensure the database and the table exist (else move to the "parent" script)
  * and display headers
  *
- * @version $Id: db_table_exists.lib.php 13183 2009-12-27 21:52:21Z lem9 $
- * @package phpMyAdmin
+ * @package PhpMyAdmin
  */
 if (! defined('PHPMYADMIN')) {
     exit;
 }
-
-/**
- *
- */
-require_once './libraries/Table.class.php';
 
 if (empty($is_db)) {
     if (strlen($db)) {
@@ -52,7 +46,7 @@ if (empty($is_table) && !defined('PMA_SUBMIT_MULT') && ! defined('TABLE_MAY_BE_A
 
         if (! $is_table) {
             $_result = PMA_DBI_try_query(
-                'SHOW TABLES LIKE \'' . PMA_sqlAddslashes($table, true) . '\';',
+                'SHOW TABLES LIKE \'' . PMA_sqlAddSlashes($table, true) . '\';',
                 null, PMA_DBI_QUERY_STORE);
             $is_table = @PMA_DBI_num_rows($_result);
             PMA_DBI_free_result($_result);
@@ -79,7 +73,7 @@ if (empty($is_table) && !defined('PMA_SUBMIT_MULT') && ! defined('TABLE_MAY_BE_A
             }
 
             if (! $is_table) {
-                require 'db_sql.php';
+                include './db_sql.php';
                 exit;
             }
         }

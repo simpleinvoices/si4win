@@ -3,8 +3,7 @@
 /**
  * Functions for cleanup of user input.
  *
- * @version $Id: cleanup.lib.php 11982 2008-11-24 10:32:56Z nijel $
- * @package phpMyAdmin
+ * @package PhpMyAdmin
  */
 
 /**
@@ -13,7 +12,6 @@
  * @param string list of variables to allow
  * @return nothing
  * @access public
- * @author  Michal Cihar (michal@cihar.com)
  */
 function PMA_remove_request_vars(&$whitelist)
 {
@@ -22,7 +20,7 @@ function PMA_remove_request_vars(&$whitelist)
     // strings
     $keys = array_keys(array_merge((array)$_REQUEST, (array)$_GET, (array)$_POST, (array)$_COOKIE));
 
-    foreach($keys as $key) {
+    foreach ($keys as $key) {
         if (! in_array($key, $whitelist)) {
             unset($_REQUEST[$key], $_GET[$key], $_POST[$key], $GLOBALS[$key]);
         } else {

@@ -1,14 +1,21 @@
 <?php
 /* vim: set expandtab sw=4 ts=4 sts=4: */
 /**
- * @package phpMyAdmin-Transformation
- * @version $Id: text_plain__formatted.inc.php 11973 2008-11-24 09:30:37Z nijel $
+ * @package PhpMyAdmin-Transformation
  */
+
+function PMA_transformation_text_plain__formatted_info()
+{
+    return array(
+        'info' => __('Displays the contents of the column as-is, without running it through htmlspecialchars(). That is, the column is assumed to contain valid HTML.'),
+        );
+}
 
 /**
  *
  */
-function PMA_transformation_text_plain__formatted($buffer, $options = array(), $meta = '') {
+function PMA_transformation_text_plain__formatted($buffer, $options = array(), $meta = '')
+{
     return $buffer;
 }
 

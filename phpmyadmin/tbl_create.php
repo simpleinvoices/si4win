@@ -1,65 +1,38 @@
 <?php
 /* vim: set expandtab sw=4 ts=4 sts=4: */
 /**
- * @uses    $cfg['DefaultTabDatabase']
- * @uses    $GLOBALS['table']
- * @uses    $GLOBALS['db']
- * @uses    $strTableEmpty
- * @uses    $strTableAlreadyExists
- * @uses    $strTable
- * @uses    $strTableHasBeenCreated
- * @uses    PMA_Table::generateFieldSpec()
- * @uses    PMA_checkParameters()
- * @uses    PMA_generateCharsetQueryPart()
- * @uses    PMA_sqlAddslashes()
- * @uses    PMA_DBI_try_query()
- * @uses    PMA_getRelationsParam()
- * @uses    PMA_setMIME()
- * @uses    PMA_mysqlDie()
- * @uses    PMA_generate_common_url()
- * @uses    PMA_DBI_get_columns()
- * @uses    PMA_DBI_select_db()
- * @uses    PMA_backquote()
- * @uses    $_REQUEST['do_save_data']
- * @uses    $_REQUEST['submit_num_fields']
- * @uses    $_REQUEST['orig_num_fields']
- * @uses    $_REQUEST['added_fields']
- * @uses    $_REQUEST['num_fields']
- * @uses    preg_replace()
- * @uses    count()
- * @uses    is_array()
- * @uses    strlen()
- * @uses    sprintf()
- * @uses    htmlspecialchars()
- * @version $Id: tbl_create.php 12157 2008-12-25 14:33:16Z lem9 $
- * @package phpMyAdmin
+ * @package PhpMyAdmin
  */
 
 /**
  * Get some core libraries
  */
 require_once './libraries/common.inc.php';
-require_once './libraries/Table.class.php';
 
-$GLOBALS['js_include'][] = 'functions.js';
+$action = 'tbl_create.php';
 
 require_once './libraries/header.inc.php';
+$titles = PMA_buildActionTitles();
 
 // Check parameters
-// @todo PMA_checkParameters does not check db and table proper with strlen()
-PMA_checkParameters(array('db', 'table'));
+PMA_checkParameters(array('db'));
+
+/* Check if database name is empty */
+if (strlen($db) == 0) {
+    PMA_mysqlDie(__('The database name is empty!'), '', '', 'main.php');
+}
 
 /**
  * Defines the url to return to in case of error in a sql statement
  */
-if (! strlen($table)) {
-    // No table name
-    PMA_mysqlDie($strTableEmpty, '', '',
-        'db_structure.php?' . PMA_generate_common_url($db));
-} elseif (PMA_DBI_get_columns($db, $table)) {
+if (PMA_DBI_get_columns($db, $table)) {
     // table exists already
-    PMA_mysqlDie(sprintf($strTableAlreadyExists, htmlspecialchars($table)), '',
-        '', 'db_structure.php?' . PMA_generate_common_url($db));
+    PMA_mysqlDie(
+        sprintf(__('Table %s already exists!'), htmlspecialchars($table)),
+        '',
+        '',
+        'db_structure.php?' . PMA_generate_common_url($db)
+    );
 }
 
 $err_url = 'tbl_create.php?' . PMA_generate_common_url($db, $table);
@@ -71,13 +44,20 @@ if (isset($_REQUEST['submit_num_fields'])) {
 } elseif (isset($_REQUEST['num_fields']) && intval($_REQUEST['num_fields']) > 0) {
     $num_fields = (int) $_REQUEST['num_fields'];
 } else {
-    $num_fields = 2;
+    $num_fields = 4;
 }
 
 /**
  * Selects the database to work with
  */
-PMA_DBI_select_db($db);
+if (!PMA_DBI_select_db($db)) {
+    PMA_mysqlDie(
+        sprintf(__('\'%s\' database does not exist.'), htmlspecialchars($db)),
+        '',
+        '',
+        'main.php'
+    );
+}
 
 /**
  * The form used to define the structure of the table has been submitted
@@ -128,7 +108,8 @@ if (isset($_REQUEST['do_save_data'])) {
                 ? $_REQUEST['field_comments'][$i]
                 : '',
             $field_primary,
-            $i);
+            $i
+        );
 
         $query .= ', ';
         $sql_query .= $query;
@@ -212,10 +193,10 @@ if (isset($_REQUEST['do_save_data'])) {
         $sql_query .= PMA_generateCharsetQueryPart($_REQUEST['tbl_collation']);
     }
     if (!empty($_REQUEST['comment'])) {
-        $sql_query .= ' COMMENT = \'' . PMA_sqlAddslashes($_REQUEST['comment']) . '\'';
+        $sql_query .= ' COMMENT = \'' . PMA_sqlAddSlashes($_REQUEST['comment']) . '\'';
     }
     if (!empty($_REQUEST['partition_definition'])) {
-        $sql_query .= ' ' . PMA_sqlAddslashes($_REQUEST['partition_definition']);
+        $sql_query .= ' ' . PMA_sqlAddSlashes($_REQUEST['partition_definition']);
     }
     $sql_query .= ';';
 
@@ -224,26 +205,121 @@ if (isset($_REQUEST['do_save_data'])) {
 
     if ($result) {
 
-        // garvin: If comments were sent, enable relation stuff
-        require_once './libraries/relation.lib.php';
-        require_once './libraries/transformations.lib.php';
+        // If comments were sent, enable relation stuff
+        include_once './libraries/transformations.lib.php';
 
-        // garvin: Update comment table for mime types [MIME]
+        // Update comment table for mime types [MIME]
         if (isset($_REQUEST['field_mimetype'])
          && is_array($_REQUEST['field_mimetype'])
          && $cfg['BrowseMIME']) {
             foreach ($_REQUEST['field_mimetype'] as $fieldindex => $mimetype) {
                 if (isset($_REQUEST['field_name'][$fieldindex])
                  && strlen($_REQUEST['field_name'][$fieldindex])) {
-                    PMA_setMIME($db, $table, $_REQUEST['field_name'][$fieldindex], $mimetype,
-                            $_REQUEST['field_transformation'][$fieldindex],
-                            $_REQUEST['field_transformation_options'][$fieldindex]);
+                    PMA_setMIME(
+                        $db, $table, $_REQUEST['field_name'][$fieldindex], $mimetype,
+                        $_REQUEST['field_transformation'][$fieldindex],
+                        $_REQUEST['field_transformation_options'][$fieldindex]
+                    );
                 }
             }
         }
 
-        $message = PMA_Message::success('strTableHasBeenCreated');
+        $message = PMA_Message::success(__('Table %1$s has been created.'));
         $message->addParam(PMA_backquote($db) . '.' . PMA_backquote($table));
+
+        if ($GLOBALS['is_ajax_request'] == true) {
+
+            /**
+             * construct the html for the newly created table's row to be appended
+             * to the list of tables.
+             *
+             * Logic taken from db_structure.php
+             */
+
+            $tbl_url_params = array();
+            $tbl_url_params['db'] = $db;
+            $tbl_url_params['table'] = $table;
+            $is_show_stats = $cfg['ShowStats'];
+
+            $tbl_stats_result = PMA_DBI_query('SHOW TABLE STATUS FROM '
+                    . PMA_backquote($db) . ' LIKE \'' . PMA_sqlAddSlashes($table, true) . '\';');
+            $tbl_stats = PMA_DBI_fetch_assoc($tbl_stats_result);
+            PMA_DBI_free_result($tbl_stats_result);
+            unset($tbl_stats_result);
+
+            if ($is_show_stats) {
+                $sum_size       = (double) 0;
+                $overhead_size  = (double) 0;
+                $overhead_check = '';
+
+                $tblsize                    =  doubleval($tbl_stats['Data_length']) + doubleval($tbl_stats['Index_length']);
+                $sum_size                   += $tblsize;
+                list($formatted_size, $unit) =  PMA_formatByteDown($tblsize, 3, ($tblsize > 0) ? 1 : 0);
+                if (isset($tbl_stats['Data_free']) && $tbl_stats['Data_free'] > 0) {
+                    list($formatted_overhead, $overhead_unit)     = PMA_formatByteDown($tbl_stats['Data_free'], 3, ($tbl_stats['Data_free'] > 0) ? 1 : 0);
+                    $overhead_size           += $tbl_stats['Data_free'];
+                }
+
+                if (isset($formatted_overhead)) {
+                        $overhead = '<span>' . $formatted_overhead . '</span> <span class="unit">' . $overhead_unit . '</span>';
+                        unset($formatted_overhead);
+                    } else {
+                        $overhead = '-';
+                }
+           }
+
+            $new_table_string = '<tr>' . "\n";
+            $new_table_string .= '<td align="center"> <input type="checkbox" id="checkbox_tbl_" name="selected_tbl[]" value="'.htmlspecialchars($table).'" /> </td>' . "\n";
+
+            $new_table_string .= '<th>';
+            $new_table_string .= '<a href="sql.php' . PMA_generate_common_url($tbl_url_params) . '">'. $table . '</a>';
+
+            if (PMA_Tracker::isActive()) {
+                $truename = str_replace(' ', '&nbsp;', htmlspecialchars($table));
+                if (PMA_Tracker::isTracked($db, $truename)) {
+                    $new_table_string .= '<a href="tbl_tracking.php' . PMA_generate_common_url($tbl_url_params) . '">';
+                    $new_table_string .= PMA_getImage('eye.png', __('Tracking is active.'));
+                } elseif (PMA_Tracker::getVersion($db, $truename) > 0) {
+                    $new_table_string .= '<a href="tbl_tracking.php' . PMA_generate_common_url($tbl_url_params) . '">';
+                    $new_table_string .= PMA_getImage('eye_grey.png', __('Tracking is not active.'));
+                }
+                unset($truename);
+            }
+            $new_table_string .= '</th>' . "\n";
+
+            $new_table_string .= '<td>' . $titles['NoBrowse'] . '</td>' . "\n";
+
+            $new_table_string .= '<td><a href="tbl_structure.php' . PMA_generate_common_url($tbl_url_params) . '">' . $titles['Structure'] . '</a></td>' . "\n";
+
+            $new_table_string .= '<td>' . $titles['NoSearch'] . '</td>' . "\n";
+
+            $new_table_string .= '<td><a href="tbl_change.php' . PMA_generate_common_url($tbl_url_params) . '">' . $titles['Insert'] . '</a></td>' . "\n";
+
+            $new_table_string .= '<td>' . $titles['NoEmpty'] . '</td>' . "\n";
+
+            $new_table_string .= '<td><a class="drop_table_anchor" href="sql.php' . PMA_generate_common_url($tbl_url_params) . '&amp;sql_query=';
+            $new_table_string .= urlencode('DROP TABLE ' . PMA_backquote($table));
+            $new_table_string .= '">';
+            $new_table_string .= $titles['Drop'];
+            $new_table_string .= '</a></td>' . "\n";
+
+            $new_table_string .= '<td class="value">' . $tbl_stats['Rows'] . '</td>' . "\n";
+
+            $new_table_string .= '<td nowrap="nowrap">' . $tbl_stats['Engine'] . '</td>' . "\n";
+
+            $new_table_string .= '<td> <dfn title="' . PMA_getCollationDescr($tbl_stats['Collation']) . '">'. $tbl_stats['Collation'] .'</dfn></td>' . "\n";
+
+            if ($is_show_stats) {
+                $new_table_string .= '<td class="value tbl_size"> <a href="tbl_structure.php' . PMA_generate_common_url($tbl_url_params) . '#showusage" ><span>' . $formatted_size . '</span> <span class="unit">' . $unit . '</class></a> </td>' . "\n" ;
+                $new_table_string .= '<td class="value tbl_overhead">' . $overhead . '</td>' . "\n" ;
+            }
+
+            $new_table_string .= '</tr>' . "\n";
+
+            $extra_data['new_table_string'] = $new_table_string;
+
+            PMA_ajaxResponse($message, $message->isSuccess(), $extra_data);
+        }
 
         $display_query = $sql_query;
         $sql_query = '';
@@ -251,30 +327,43 @@ if (isset($_REQUEST['do_save_data'])) {
         // read table info on this newly created table, in case
         // the next page is Structure
         $reread_info = true;
-        require './libraries/tbl_info.inc.php';
+        include './libraries/tbl_info.inc.php';
 
         // do not switch to sql.php - as there is no row to be displayed on a new table
         if ($cfg['DefaultTabTable'] === 'sql.php') {
-            require './tbl_structure.php';
+            include './tbl_structure.php';
         } else {
-            require './' . $cfg['DefaultTabTable'];
+            include './' . $cfg['DefaultTabTable'];
         }
         exit;
     } else {
-        PMA_mysqlDie('', '', '', $err_url, false);
-        // garvin: An error happened while inserting/updating a table definition.
-        // to prevent total loss of that data, we embed the form once again.
-        // The variable $regenerate will be used to restore data in libraries/tbl_properties.inc.php
-        $num_fields = $_REQUEST['orig_num_fields'];
-        $regenerate = true;
+        if ($GLOBALS['is_ajax_request'] == true) {
+            PMA_ajaxResponse(PMA_DBI_getError(), false);
+        } else {
+            PMA_mysqlDie('', '', '', $err_url, false);
+            // An error happened while inserting/updating a table definition.
+            // to prevent total loss of that data, we embed the form once again.
+            // The variable $regenerate will be used to restore data in libraries/tbl_properties.inc.php
+            $num_fields = $_REQUEST['orig_num_fields'];
+            $regenerate = true;
+        }
     }
 } // end do create table
 
 /**
  * Displays the form used to define the structure of the table
  */
-$action = 'tbl_create.php';
+
+// This div is used to show the content(eg: create table form with more columns) fetched with AJAX subsequently.
+if ($GLOBALS['is_ajax_request'] != true) {
+    echo('<div id="create_table_div">');
+}
+
 require './libraries/tbl_properties.inc.php';
 // Displays the footer
-require_once './libraries/footer.inc.php';
+require './libraries/footer.inc.php';
+
+if ($GLOBALS['is_ajax_request'] != true) {
+    echo('</div>');
+}
 ?>

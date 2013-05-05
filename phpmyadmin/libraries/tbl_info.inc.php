@@ -6,17 +6,11 @@
  * @todo should be handled by class Table
  * @todo this should be recoded as functions, to avoid messing with global variables
  *
- * @version $Id: tbl_info.inc.php 13061 2009-10-23 10:02:09Z lem9 $
- * @package phpMyAdmin
+ * @package PhpMyAdmin
  */
 if (! defined('PHPMYADMIN')) {
     exit;
 }
-
-/**
- *
- */
-require_once './libraries/Table.class.php';
 
 /**
  * requirements
@@ -63,7 +57,7 @@ $GLOBALS['showtable'] = PMA_Table::sGetStatusInfo($GLOBALS['db'], $GLOBALS['tabl
 if ($showtable) {
     if (PMA_Table::isView($GLOBALS['db'], $GLOBALS['table'])) {
         $tbl_is_view     = true;
-        $tbl_type        = $GLOBALS['strView'];
+        $tbl_type        = __('View');
         $show_comment    = null;
     } else {
         $tbl_is_view     = false;
@@ -108,7 +102,7 @@ if ($showtable) {
         }
     }
     // we need explicit DEFAULT value here (different from '0')
-    $pack_keys = (!isset($pack_keys) || strlen($pack_keys) == 0) ? 'DEFAULT' : $pack_keys;
+    $pack_keys = (! isset($pack_keys) || strlen($pack_keys) == 0) ? 'DEFAULT' : $pack_keys;
     unset($create_options, $each_create_option);
 } // end if
 ?>

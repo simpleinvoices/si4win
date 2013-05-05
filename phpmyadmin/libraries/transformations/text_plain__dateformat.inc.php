@@ -1,14 +1,21 @@
 <?php
 /* vim: set expandtab sw=4 ts=4 sts=4: */
 /**
- * @package phpMyAdmin-Transformation
- * @version $Id: text_plain__dateformat.inc.php 11973 2008-11-24 09:30:37Z nijel $
+ * @package PhpMyAdmin-Transformation
  */
+
+function PMA_transformation_text_plain__dateformat_info()
+{
+    return array(
+        'info' => __('Displays a TIME, TIMESTAMP, DATETIME or numeric unix timestamp column as formatted date. The first option is the offset (in hours) which will be added to the timestamp (Default: 0). Use second option to specify a different date/time format string. Third option determines whether you want to see local date or UTC one (use "local" or "utc" strings) for that. According to that, date format has different value - for "local" see the documentation for PHP\'s strftime() function and for "utc" it is done using gmdate() function.'),
+        );
+}
 
 /**
  *
  */
-function PMA_transformation_text_plain__dateformat($buffer, $options = array(), $meta = '') {
+function PMA_transformation_text_plain__dateformat($buffer, $options = array(), $meta = '')
+{
     // possibly use a global transform and feed it with special options:
     // include './libraries/transformations/global.inc.php';
 
@@ -25,7 +32,7 @@ function PMA_transformation_text_plain__dateformat($buffer, $options = array(), 
 
     if (empty($options[1])) {
         if ($options[2] == 'local') {
-            $options[1] = $GLOBALS['datefmt'];
+            $options[1] = __('%B %d, %Y at %I:%M %p');
         } else {
             $options[1] = 'Y-m-d  H:i:s';
         }

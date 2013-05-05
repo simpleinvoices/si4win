@@ -16,8 +16,7 @@
  *
  * All directives are explained in Documentation.html
  *
- * @version $Id: config.default.php 13257 2010-01-19 12:49:06Z lem9 $
- * @package phpMyAdmin
+ * @package PhpMyAdmin
  */
 
 /**
@@ -41,7 +40,7 @@ $cfg['PmaAbsoluteUri'] = '';
 
 /**
  * Disable the default warning that is displayed on the DB Details Structure page if
- * any of the required Tables for the relation features could not be found
+ * any of the required Tables for the configuration storage could not be found
  *
  * @global boolean $cfg['PmaNoRelation_DisableWarning']
  */
@@ -61,6 +60,13 @@ $cfg['SuhosinDisableWarning'] = false;
  * @global boolean $cfg['McryptDisableWarning']
  */
 $cfg['McryptDisableWarning'] = false;
+
+/**
+ * Show warning about incomplete translations on certain threshold.
+ *
+ * @global boolean $cfg['TranslationWarningThreshold']
+ */
+$cfg['TranslationWarningThreshold'] = 80;
 
 /**
  * Allows phpMyAdmin to be included from a document located on
@@ -136,20 +142,23 @@ $cfg['Servers'][$i]['connect_type'] = 'tcp';
  *
  * @global string $cfg['Servers'][$i]['extension']
  */
-$cfg['Servers'][$i]['extension'] = 'mysql';
-
-/* rajk - added for blobstreaming */
-$cfg['Servers'][$i]['bs_garbage_threshold'] = '';
-$cfg['Servers'][$i]['bs_repository_threshold'] = '';
-$cfg['Servers'][$i]['bs_temp_blob_timeout'] = '';
-$cfg['Servers'][$i]['bs_temp_log_threshold'] = '';
+$cfg['Servers'][$i]['extension'] = 'mysqli';
 
 /**
- * Use compressed protocol for the MySQL connection (requires PHP >= 4.3.0)
+ * Use compressed protocol for the MySQL connection
  *
  * @global boolean $cfg['Servers'][$i]['compress']
  */
 $cfg['Servers'][$i]['compress'] = false;
+
+/**
+ * MySQL control host. This permits to use a host different than the
+ * main host, for the phpMyAdmin configuration storage. If left empty,
+ * $cfg['Servers'][$i]['host'] is used instead.
+ *
+ * @global string $cfg['Servers'][$i]['controlhost']
+ */
+$cfg['Servers'][$i]['controlhost'] = '';
 
 /**
  * MySQL control user settings (this user must have read-only
@@ -175,6 +184,13 @@ $cfg['Servers'][$i]['controlpass'] = '';
  * @global string $cfg['Servers'][$i]['auth_type']
  */
 $cfg['Servers'][$i]['auth_type'] = 'cookie';
+
+/**
+ * HTTP Basic Auth Realm name to display (only used with 'HTTP' auth_type)
+ *
+ * @global string $cfg['Servers'][$i]['auth_http_realm']
+ */
+$cfg['Servers'][$i]['auth_http_realm'] = '';
 
 /**
  * File containing Swekey ids and login names (see /contrib);
@@ -204,6 +220,13 @@ $cfg['Servers'][$i]['password'] = '';
  * @global string $cfg['Servers'][$i]['SignonSession']
  */
 $cfg['Servers'][$i]['SignonSession'] = '';
+
+/**
+ * PHP script to use for 'signon' authentication method
+ *
+ * @global string $cfg['Servers'][$i]['SignonScript']
+ */
+$cfg['Servers'][$i]['SignonScript'] = '';
 
 /**
  * URL where to redirect user to login for 'signon' authentication method
@@ -251,7 +274,7 @@ $cfg['Servers'][$i]['verbose'] = '';
 
 /**
  * Database used for Relation, Bookmark and PDF Features
- * (see scripts/create_tables.sql)
+ * (see examples/create_tables.sql)
  *   - leave blank for no support
  *     SUGGESTED: 'phpmyadmin'
  *
@@ -332,6 +355,20 @@ $cfg['Servers'][$i]['history'] = '';
 $cfg['Servers'][$i]['designer_coords'] = '';
 
 /**
+ * table to store recently used tables
+ *   - leave blank for no "persistent" recently used tables
+ *     SUGGESTED: 'pma_recent'
+ */
+$cfg['Servers'][$i]['recent'] = '';
+
+/**
+ * table to store UI preferences for tables
+ *   - leave blank for no "persistent" UI preferences
+ *     SUGGESTED: 'pma_table_uiprefs'
+ */
+$cfg['Servers'][$i]['table_uiprefs'] = '';
+
+/**
  * table to store SQL tracking
  *   - leave blank for no SQL tracking
  *     SUGGESTED: 'pma_tracking'
@@ -339,6 +376,28 @@ $cfg['Servers'][$i]['designer_coords'] = '';
  * @global string $cfg['Servers'][$i]['tracking']
  */
 $cfg['Servers'][$i]['tracking'] = '';
+
+/**
+ * table to store user preferences
+ *   - leave blank to disable server storage
+ *     SUGGESTED: 'pma_userconfig'
+ *
+ * @global string $cfg['Servers'][$i]['userconfig']
+ */
+$cfg['Servers'][$i]['userconfig'] = '';
+
+/**
+ * Maximum number of records saved in $cfg['Servers'][$i]['table_uiprefs'] table.
+ *
+ * In case where tables in databases is modified (e.g. dropped or renamed),
+ * table_uiprefs may contains invalid data (referring to tables which are not
+ * exist anymore).
+ * This configuration make sure that we only keep N (N = MaxTableUiprefs)
+ * newest record in table_uiprefs and automatically delete older records.
+ *
+ * @global integer $cfg['Servers'][$i]['userconfig'] = '';
+ */
+$cfg['Servers'][$i]['MaxTableUiprefs'] = 100;
 
 /**
  * set to false if you know that your pma_* tables are up to date.
@@ -377,7 +436,7 @@ $cfg['Servers'][$i]['AllowDeny']['order'] = '';
 $cfg['Servers'][$i]['AllowDeny']['rules'] = array();
 
 /**
- * Disable use of INFORMATION_SCHEMA
+ * Disable use of INFORMATION_SCHEMA. Is always 'true' for Drizzle.
  *
  * @see http://sf.net/support/tracker.php?aid=1849494
  * @see http://bugs.mysql.com/19588
@@ -416,7 +475,7 @@ $cfg['Servers'][$i]['ShowDatabasesCommand'] = 'SHOW DATABASES';
  *
  * @global array $cfg['Servers'][$i]['CountTables']
  */
-$cfg['Servers'][$i]['CountTables'] = true;
+$cfg['Servers'][$i]['CountTables'] = false;
 
 /**
  * Whether the tracking mechanism creates versions for tables and views automatically.
@@ -439,7 +498,7 @@ $cfg['Servers'][$i]['tracking_default_statements'] = 'CREATE TABLE,ALTER TABLE,D
                                           'CREATE DATABASE,ALTER DATABASE,DROP DATABASE';
 
 /**
- * Whether a DROP VIEW IF EXISTS statement will added as first line to the log when creating a view.
+ * Whether a DROP VIEW IF EXISTS statement will be added as first line to the log when creating a view.
  *
  * @global bool $cfg['Servers'][$i]['tracking_add_drop_view']
  */
@@ -447,7 +506,7 @@ $cfg['Servers'][$i]['tracking_default_statements'] = 'CREATE TABLE,ALTER TABLE,D
 $cfg['Servers'][$i]['tracking_add_drop_view'] = true;
 
 /**
- * Whether a DROP TABLE IF EXISTS statement will added as first line to the log when creating a table.
+ * Whether a DROP TABLE IF EXISTS statement will be added as first line to the log when creating a table.
  *
  * @global bool $cfg['Servers'][$i]['tracking_add_drop_table']
  */
@@ -455,20 +514,12 @@ $cfg['Servers'][$i]['tracking_add_drop_view'] = true;
 $cfg['Servers'][$i]['tracking_add_drop_table'] = true;
 
 /**
- * Whether a DROP DATABASE IF EXISTS statement will added as first line to the log when creating a database.
+ * Whether a DROP DATABASE IF EXISTS statement will be added as first line to the log when creating a database.
  *
  * @global bool $cfg['Servers'][$i]['tracking_add_drop_database']
  */
 
 $cfg['Servers'][$i]['tracking_add_drop_database'] = true;
-
-/**
- * Whether a DROP DATABASE IF EXISTS statement will added as first line to the log when creating a database.
- *
- * @global bool $cfg['Servers'][$i]['tracking_version_drop_database']
- */
-
-$cfg['Servers'][$i]['tracking_version_drop_database'] = true;
 
 /**
  * Default server (0 = no default server)
@@ -487,6 +538,20 @@ $cfg['ServerDefault'] = 1;
  * Other core phpMyAdmin settings
  */
 /**
+ * whether Ajax behavior is active
+ *
+ * @global boolean $cfg['AjaxEnable']
+ */
+$cfg['AjaxEnable'] = true;
+
+/**
+ * whether version check is active
+ *
+ * @global boolean $cfg['VersionCheck']
+ */
+$cfg['VersionCheck'] = VERSION_CHECK_DEFAULT;
+
+/**
  * maximum number of db's displayed in left frame and database list
  *
  * @global integer $cfg['MaxDbList']
@@ -499,6 +564,13 @@ $cfg['MaxDbList'] = 100;
  * @global integer $cfg['MaxTableList']
  */
 $cfg['MaxTableList'] = 250;
+
+/**
+ * whether to show hint or not
+ *
+ * @global boolean $cfg['ShowHint']
+ */
+$cfg['ShowHint'] = true;
 
 /**
  * maximum number of characters when a SQL query is displayed
@@ -536,14 +608,24 @@ $cfg['ForceSSL'] = false;
 $cfg['ExecTimeLimit'] = 300;
 
 /**
- * maximum allocated bytes (0 for no limit)
+ * Path for storing session data (session_save_path PHP parameter).
  *
- * @global integer $cfg['MemoryLimit']
+ * @global integer $cfg['SessionSavePath']
  */
-$cfg['MemoryLimit'] = 0;
+$cfg['SessionSavePath'] = '';
+
+/**
+ * maximum allocated bytes ('0' for no limit)
+ * this is a string because '16M' is a valid value; we must put here
+ * a string as the default value so that /setup accepts strings
+ *
+ * @global string $cfg['MemoryLimit']
+ */
+$cfg['MemoryLimit'] = '0';
 
 /**
  * mark used tables, make possible to show locked tables (since MySQL 3.23.30)
+ * Is ignored for Drizzle.
  *
  * @global boolean $cfg['SkipLockedTables']
  */
@@ -557,6 +639,13 @@ $cfg['SkipLockedTables'] = false;
 $cfg['ShowSQL'] = true;
 
 /**
+ * retain SQL input on Ajax execute
+ *
+ * @global boolean $cfg['RetainQueryEditor']
+ */
+$cfg['RetainQueryBox'] = false;
+
+/**
  * show a 'Drop database' link to normal users
  *
  * @global boolean $cfg['AllowUserDropDatabase']
@@ -564,7 +653,8 @@ $cfg['ShowSQL'] = true;
 $cfg['AllowUserDropDatabase'] = false;
 
 /**
- * confirm 'DROP TABLE' & 'DROP DATABASE'
+ * confirm some commands that can result in loss of data
+ * (see "need_confirm" in the parser)
  *
  * @global boolean $cfg['Confirm']
  */
@@ -578,7 +668,8 @@ $cfg['Confirm'] = true;
 $cfg['LoginCookieRecall'] = true;
 
 /**
- * validity of cookie login (in seconds)
+ * validity of cookie login (in seconds; 1440 matches php.ini's
+ * session.gc_maxlifetime)
  *
  * @global integer $cfg['LoginCookieValidity']
  */
@@ -762,6 +853,21 @@ $cfg['LeftLogoLink'] = 'main.php';
 $cfg['LeftLogoLinkWindow'] = 'main';
 
 /**
+ * number of recently used tables displayed in the navigation frame
+ *
+ * @global integer $cfg['LeftRecentTable']
+ */
+$cfg['LeftRecentTable'] = 10;
+
+/**
+ * display a JavaScript table filter in the left frame
+ * when more then x tables are present
+ *
+ * @global boolean $cfg['LeftDisplayTableFilterMinimum']
+ */
+$cfg['LeftDisplayTableFilterMinimum'] = 30;
+
+/**
  * display server choice at top of left frame
  *
  * @global boolean $cfg['LeftDisplayServers']
@@ -858,14 +964,16 @@ $cfg['SuggestDBName'] = true;
 $cfg['NavigationBarIconic'] = true;
 
 /**
- * allows to display all the rows
+ * Defines whether a user should be displayed a "show all (records)"
+ * button in browse mode or not.
  *
  * @global boolean $cfg['ShowAll']
  */
 $cfg['ShowAll'] = false;
 
 /**
- * maximum number of rows to display
+ * Number of rows displayed when browsing a result set. If the result
+ * set contains more rows, "Previous" and "Next".
  *
  * @global integer $cfg['MaxRows']
  */
@@ -878,10 +986,10 @@ $cfg['MaxRows'] = 30;
  *
  * @global string $cfg['Order']
  */
-$cfg['Order'] = 'ASC';
+$cfg['Order'] = 'SMART';
 
 /**
- * default for 'Show binary contents as HEX' 
+ * default for 'Show binary contents as HEX'
  *
  * @global string $cfg['DisplayBinaryAsHex']
  */
@@ -911,6 +1019,13 @@ $cfg['ProtectBinary'] = 'blob';
 $cfg['ShowFunctionFields'] = true;
 
 /**
+ * Display the type fields in edit/insert mode
+ *
+ * @global boolean $cfg['ShowFieldTypesInDataEditView']
+ */
+$cfg['ShowFieldTypesInDataEditView'] = true;
+
+/**
  * Which editor should be used for CHAR/VARCHAR fields:
  *  input - allows limiting of input length
  *  textarea - allows newlines in fields
@@ -918,6 +1033,20 @@ $cfg['ShowFunctionFields'] = true;
  * @global string $cfg['CharEditing']
  */
 $cfg['CharEditing'] = 'input';
+
+/**
+ * The minimum size for character input fields
+ *
+ * @global integer $cfg['MinSizeForInputField']
+ */
+$cfg['MinSizeForInputField'] = 4;
+
+/**
+ * The maximum size for character input fields
+ *
+ * @global integer $cfg['MinSizeForInputField']
+ */
+$cfg['MaxSizeForInputField'] = 60;
 
 /**
  * How many rows can be inserted at one time
@@ -981,7 +1110,7 @@ $cfg['CompressOnFly'] = true;
  */
 
 /**
- * use graphically less intense menu tabs
+ * Use graphically less intense menu tabs
  *
  * @global boolean $cfg['LightTabs']
  */
@@ -992,7 +1121,7 @@ $cfg['LightTabs'] = false;
  *
  * @global boolean $cfg['PropertiesIconic']
  */
-$cfg['PropertiesIconic'] = true;
+$cfg['PropertiesIconic'] = 'both';
 
 /**
  * How many columns should be used for table display of a database?
@@ -1039,29 +1168,6 @@ $cfg['DefaultTabDatabase'] = 'db_structure.php';
  */
 $cfg['DefaultTabTable'] = 'sql.php';
 
-/**
- * Mapping between script filenames and translation keys
- *
- * Lookup can be performed by PMA_getTitleForTarget()
- *
- * @global string $cfg['DefaultTabTranslationMapping']
- */
-$cfg['DefaultTabTranslationMapping'] = array(
-
-	// Values for $cfg['DefaultTabTable']
-	'tbl_structure.php' =>  'strStructure',
-	'tbl_sql.php' => 'strSQL',
-	'tbl_select.php' => 'strSearch',
-	'tbl_change.php' => 'strInsert',
-	'sql.php' => 'strBrowse',
-
-	// Values for $cfg['DefaultTabDatabase']
-	'db_structure.php' => 'strStructure',
-	'db_sql.php' => 'strSQL',
-	'db_search.php' => 'strSearch',
-	'db_operations.php' => 'strOperations',
-);
-
 /*******************************************************************************
  * Export defaults
  */
@@ -1073,6 +1179,13 @@ $cfg['Export'] = array();
  * @global string $cfg['Export']['format']
  */
 $cfg['Export']['format'] = 'sql';
+
+/**
+ * quick/custom/custom-no-form
+ *
+ * @global string $cfg['Export']['format']
+ */
+$cfg['Export']['method'] = 'quick';
 
 /**
  * none/zip/gzip/bzip2
@@ -1112,6 +1225,20 @@ $cfg['Export']['onserver_overwrite'] = false;
 /**
  *
  *
+ * @global boolean $cfg['Export']['quick_export_onserver']
+ */
+$cfg['Export']['quick_export_onserver'] = false;
+
+/**
+ *
+ *
+ * @global boolean $cfg['Export']['quick_export_onserver_overwrite']
+ */
+$cfg['Export']['quick_export_onserver_overwrite'] = false;
+
+/**
+ *
+ *
  * @global boolean $cfg['Export']['remember_file_template']
  */
 $cfg['Export']['remember_file_template'] = true;
@@ -1121,21 +1248,35 @@ $cfg['Export']['remember_file_template'] = true;
  *
  * @global string $cfg['Export']['file_template_table']
  */
-$cfg['Export']['file_template_table'] = '__TABLE__';
+$cfg['Export']['file_template_table'] = '@TABLE@';
 
 /**
  *
  *
  * @global string $cfg['Export']['file_template_database']
  */
-$cfg['Export']['file_template_database'] = '__DB__';
+$cfg['Export']['file_template_database'] = '@DATABASE@';
 
 /**
  *
  *
  * @global string $cfg['Export']['file_template_server']
  */
-$cfg['Export']['file_template_server'] = '__SERVER__';
+$cfg['Export']['file_template_server'] = '@SERVER@';
+
+/**
+ *
+ *
+ * @global string $cfg['Export']['codegen_structure_or_data']
+ */
+$cfg['Export']['codegen_structure_or_data'] = 'data';
+
+/**
+ *
+ *
+ * @global $cfg['Export']['codegen_format']
+ */
+$cfg['Export']['codegen_format'] = 0;
 
 /**
  *
@@ -1154,16 +1295,9 @@ $cfg['Export']['ods_null'] = 'NULL';
 /**
  *
  *
- * @global boolean $cfg['Export']['odt_structure']
+ * @global string $cfg['Export']['odt_structure_or_data']
  */
-$cfg['Export']['odt_structure'] = true;
-
-/**
- *
- *
- * @global boolean $cfg['Export']['odt_data']
- */
-$cfg['Export']['odt_data'] = true;
+$cfg['Export']['odt_structure_or_data'] = 'structure_and_data';
 
 /**
  *
@@ -1203,16 +1337,9 @@ $cfg['Export']['odt_null'] = 'NULL';
 /**
  *
  *
- * @global boolean $cfg['Export']['htmlword_structure']
+ * @global boolean $cfg['Export']['htmlword_structure_or_data']
  */
-$cfg['Export']['htmlword_structure'] = true;
-
-/**
- *
- *
- * @global boolean $cfg['Export']['htmlword_data']
- */
-$cfg['Export']['htmlword_data'] = true;
+$cfg['Export']['htmlword_structure_or_data'] = 'structure_and_data';
 
 /**
  *
@@ -1231,23 +1358,16 @@ $cfg['Export']['htmlword_null'] = 'NULL';
 /**
  *
  *
- * @global boolean $cfg['Export']['texytext_structure']
+ * @global string $cfg['Export']['texytext_structure_or_data']
  */
-$cfg['Export']['texytext_structure'] = TRUE;
-
-/**
- *
- *
- * @global boolean $cfg['Export']['texytext_data']
- */
-$cfg['Export']['texytext_data'] = TRUE;
+$cfg['Export']['texytext_structure_or_data'] = 'structure_and_data';
 
 /**
  *
  *
  * @global boolean $cfg['Export']['texytext_columns']
  */
-$cfg['Export']['texytext_columns'] = FALSE;
+$cfg['Export']['texytext_columns'] = false;
 
 /**
  *
@@ -1266,6 +1386,13 @@ $cfg['Export']['xls_columns'] = false;
 /**
  *
  *
+ * @global string $cfg['Export']['xls_structure_or_data']
+ */
+$cfg['Export']['xls_structure_or_data'] = 'data';
+
+/**
+ *
+ *
  * @global string $cfg['Export']['xls_null']
  */
 $cfg['Export']['xls_null'] = 'NULL';
@@ -1276,6 +1403,13 @@ $cfg['Export']['xls_null'] = 'NULL';
  * @global boolean $cfg['Export']['xlsx_columns']
  */
 $cfg['Export']['xlsx_columns'] = false;
+
+/**
+ *
+ *
+ * @global string $cfg['Export']['xlsx_structure_or_data']
+ */
+$cfg['Export']['xlsx_structure_or_data'] = 'data';
 
 /**
  *
@@ -1294,6 +1428,13 @@ $cfg['Export']['csv_columns'] = false;
 /**
  *
  *
+ * @global string $cfg['Export']['csv_structure_or_data']
+ */
+$cfg['Export']['csv_structure_or_data'] = 'data';
+
+/**
+ *
+ *
  * @global string $cfg['Export']['csv_null']
  */
 $cfg['Export']['csv_null'] = 'NULL';
@@ -1303,7 +1444,7 @@ $cfg['Export']['csv_null'] = 'NULL';
  *
  * @global string $cfg['Export']['csv_separator']
  */
-$cfg['Export']['csv_separator'] = ';';
+$cfg['Export']['csv_separator'] = ',';
 
 /**
  *
@@ -1317,7 +1458,7 @@ $cfg['Export']['csv_enclosed'] = '"';
  *
  * @global string $cfg['Export']['csv_escaped']
  */
-$cfg['Export']['csv_escaped'] = '\\';
+$cfg['Export']['csv_escaped'] = '"';
 
 /**
  *
@@ -1325,6 +1466,13 @@ $cfg['Export']['csv_escaped'] = '\\';
  * @global string $cfg['Export']['csv_terminated']
  */
 $cfg['Export']['csv_terminated'] = 'AUTO';
+
+/**
+ *
+ *
+ * @global string $cfg['Export']['csv_removeCRLF']
+ */
+$cfg['Export']['csv_removeCRLF'] = false;
 
 /**
  *
@@ -1350,16 +1498,23 @@ $cfg['Export']['excel_edition'] = 'win';
 /**
  *
  *
- * @global boolean $cfg['Export']['latex_structure']
+ * @global string $cfg['Export']['excel_removeCRLF']
  */
-$cfg['Export']['latex_structure'] = true;
+$cfg['Export']['excel_removeCRLF'] = false;
 
 /**
  *
  *
- * @global boolean $cfg['Export']['latex_data']
+ * @global string $cfg['Export']['excel_structure_or_data']
  */
-$cfg['Export']['latex_data'] = true;
+$cfg['Export']['excel_structure_or_data'] = 'data';
+
+/**
+ *
+ *
+ * @global string $cfg['Export']['latex_structure_or_data']
+ */
+$cfg['Export']['latex_structure_or_data'] = 'structure_and_data';
 
 /**
  *
@@ -1436,28 +1591,56 @@ $cfg['Export']['latex_data_continued_caption'] = 'strLatexContent strLatexContin
  *
  * @global string $cfg['Export']['latex_data_label']
  */
-$cfg['Export']['latex_data_label'] = 'tab:__TABLE__-data';
+$cfg['Export']['latex_data_label'] = 'tab:@TABLE@-data';
 
 /**
  *
  *
  * @global string $cfg['Export']['latex_structure_label']
  */
-$cfg['Export']['latex_structure_label'] = 'tab:__TABLE__-structure';
+$cfg['Export']['latex_structure_label'] = 'tab:@TABLE@-structure';
 
 /**
  *
  *
- * @global boolean $cfg['Export']['sql_structure']
+ * @global string $cfg['Export']['mediawiki_structure_or_data']
  */
-$cfg['Export']['sql_structure'] = true;
+$cfg['Export']['mediawiki_structure_or_data'] = 'data';
 
 /**
  *
  *
- * @global boolean $cfg['Export']['sql_data']
+ * @global string $cfg['Export']['ods_structure_or_data']
  */
-$cfg['Export']['sql_data'] = true;
+$cfg['Export']['ods_structure_or_data'] = 'data';
+
+/**
+ *
+ *
+ * @global string $cfg['Export']['pdf_structure_or_data']
+ */
+$cfg['Export']['pdf_structure_or_data'] = 'data';
+
+/**
+ *
+ *
+ * @global string $cfg['Export']['php_array_structure_or_data']
+ */
+$cfg['Export']['php_array_structure_or_data'] = 'data';
+
+/**
+ *
+ *
+ * @global string $cfg['Export']['json_structure_or_data']
+ */
+$cfg['Export']['json_structure_or_data'] = 'data';
+
+/**
+ *
+ *
+ * @global string $cfg['Export']['sql_structure_or_data']
+ */
+$cfg['Export']['sql_structure_or_data'] = 'structure_and_data';
 
 /**
  *
@@ -1515,7 +1698,7 @@ $cfg['Export']['sql_if_not_exists'] = true;
  *
  * @global boolean $cfg['Export']['sql_procedure_function']
  */
-$cfg['Export']['sql_procedure_function'] = false;
+$cfg['Export']['sql_procedure_function'] = true;
 
 /**
  *
@@ -1548,13 +1731,6 @@ $cfg['Export']['sql_relation'] = false;
 /**
  *
  *
- * @global boolean $cfg['Export']['sql_columns']
- */
-$cfg['Export']['sql_columns'] = true;
-
-/**
- *
- *
  * @global boolean $cfg['Export']['sql_delayed']
  */
 $cfg['Export']['sql_delayed'] = false;
@@ -1565,6 +1741,13 @@ $cfg['Export']['sql_delayed'] = false;
  * @global boolean $cfg['Export']['sql_ignore']
  */
 $cfg['Export']['sql_ignore'] = false;
+
+/**
+ * Export time in UTC.
+ *
+ * @global boolean $cfg['Export']['sql_utc_time']
+ */
+$cfg['Export']['sql_utc_time'] = true;
 
 /**
  *
@@ -1578,14 +1761,7 @@ $cfg['Export']['sql_hex_for_blob'] = true;
  *
  * @global string $cfg['Export']['sql_type']
  */
-$cfg['Export']['sql_type'] = 'insert';
-
-/**
- *
- *
- * @global boolean $cfg['Export']['sql_extended']
- */
-$cfg['Export']['sql_extended'] = true;
+$cfg['Export']['sql_type'] = 'INSERT';
 
 /**
  *
@@ -1618,16 +1794,16 @@ $cfg['Export']['sql_header_comment'] = '';
 /**
  *
  *
- * @global boolean $cfg['Export']['pdf_structure']
+ * @global boolean $cfg['Export']['sql_create_table_statements']
  */
-$cfg['Export']['pdf_structure'] = false;
+$cfg['Export']['sql_create_table_statements'] = true;
 
 /**
+ * Whether to use complete inserts, extended inserts, both, or neither
  *
- *
- * @global boolean $cfg['Export']['pdf_data']
+ * @global string $cfg['Export']['sql_insert_syntax']
  */
-$cfg['Export']['pdf_data'] = true;
+$cfg['Export']['sql_insert_syntax'] = 'both';
 
 /**
  *
@@ -1635,6 +1811,13 @@ $cfg['Export']['pdf_data'] = true;
  * @global string $cfg['Export']['pdf_report_title']
  */
 $cfg['Export']['pdf_report_title'] = '';
+
+/**
+ *
+ *
+ *@global string $cfg['Export']['xml_structure_or_data']
+ */
+$cfg['Export']['xml_structure_or_data'] = 'data';
 
 /**
  * Export schema for each structure
@@ -1685,6 +1868,12 @@ $cfg['Export']['xml_export_views'] = true;
  */
 $cfg['Export']['xml_export_contents'] = true;
 
+/**
+ *
+ *
+ * @global string $cfg['Export']['yaml_structure_or_data']
+ */
+$cfg['Export']['yaml_structure_or_data'] = 'data';
 
 /*******************************************************************************
  * Import defaults
@@ -1717,7 +1906,7 @@ $cfg['Import']['allow_interrupt'] = true;
  *
  * @global integer $cfg['Import']['skip_queries']
  */
-$cfg['Import']['skip_queries'] = '0';
+$cfg['Import']['skip_queries'] = 0;
 
 /**
  *
@@ -1743,9 +1932,16 @@ $cfg['Import']['csv_replace'] = false;
 /**
  *
  *
+ * @global boolean $cfg['Import']['csv_ignore']
+ */
+$cfg['Import']['csv_ignore'] = false;
+
+/**
+ *
+ *
  * @global string $cfg['Import']['csv_terminated']
  */
-$cfg['Import']['csv_terminated'] = ';';
+$cfg['Import']['csv_terminated'] = ',';
 
 /**
  *
@@ -1759,7 +1955,7 @@ $cfg['Import']['csv_enclosed'] = '"';
  *
  * @global string $cfg['Import']['csv_escaped']
  */
-$cfg['Import']['csv_escaped'] = '\\';
+$cfg['Import']['csv_escaped'] = '"';
 
 /**
  *
@@ -1788,6 +1984,13 @@ $cfg['Import']['csv_col_names'] = false;
  * @global boolean $cfg['Import']['ldi_replace']
  */
 $cfg['Import']['ldi_replace'] = false;
+
+/**
+ *
+ *
+ * @global boolean $cfg['Import']['ldi_ignore']
+ */
+$cfg['Import']['ldi_ignore'] = false;
 
 /**
  *
@@ -1874,6 +2077,13 @@ $cfg['Import']['xls_col_names'] = false;
 $cfg['Import']['xls_empty_rows'] = true;
 
 /**
+ *
+ *
+ * @global string $cfg['Import']['xlsx_col_names']
+ */
+$cfg['Import']['xlsx_col_names'] = false;
+
+/**
  * Link to the official MySQL documentation.
  * Be sure to include no trailing slash on the path.
  * See http://dev.mysql.com/doc/ for more information
@@ -1926,7 +2136,7 @@ $cfg['PDFDefaultPageSize'] = 'A4';
  *
  * @global string $cfg['DefaultLang']
  */
-$cfg['DefaultLang'] = 'en-utf-8';
+$cfg['DefaultLang'] = 'en';
 
 /**
  * Default connection collation
@@ -1936,9 +2146,8 @@ $cfg['DefaultLang'] = 'en-utf-8';
 $cfg['DefaultConnectionCollation'] = 'utf8_general_ci';
 
 /**
- * Force: always use this language - must be defined in
- *        libraries/select_lang.lib.php
- * $cfg['Lang'] = 'en-utf-8';
+ * Force: always use this language
+ * $cfg['Lang'] = 'en';
  *
  * Regular expression to limit listed languages, e.g. '^(cs|en)' for Czech and
  * English only
@@ -1948,32 +2157,13 @@ $cfg['DefaultConnectionCollation'] = 'utf8_general_ci';
 $cfg['FilterLanguages'] = '';
 
 /**
- * Default character set to use for recoding of MySQL queries, does not take
- * any effect when character sets recoding is switched off by
- * $cfg['AllowAnywhereRecoding'] or in language file
- * (see $cfg['AvailableCharsets'] to possible choices, you can add your own)
- *
- * @global string $cfg['DefaultCharset']
- */
-$cfg['DefaultCharset'] = 'utf-8';
-
-/**
- * Allow character set recoding of MySQL queries, must be also enabled in language
- * file to make harder using other language files than Unicode.
- * Default value is false to avoid problems on servers without the iconv
- * extension
- *
- * @global boolean $cfg['AllowAnywhereRecoding']
- */
-$cfg['AllowAnywhereRecoding'] = false;
-
-/**
  * You can select here which functions will be used for character set conversion.
  * Possible values are:
  *      auto   - automatically use available one (first is tested iconv, then
  *               recode)
  *      iconv  - use iconv or libiconv functions
  *      recode - use recode_string function
+ *      none   - disable encoding conversion
  *
  * @global string $cfg['RecodingEngine']
  */
@@ -2082,7 +2272,7 @@ $cfg['TextareaCols'] = 40;
 $cfg['TextareaRows'] = 15;
 
 /**
- * double size of textarea size for LONGTEXT fields
+ * double size of textarea size for LONGTEXT columns
  *
  * @global boolean $cfg['LongtextDoubleTextarea']
  */
@@ -2110,13 +2300,6 @@ $cfg['CharTextareaCols'] = 40;
 $cfg['CharTextareaRows'] = 2;
 
 /**
- * Enable Ctrl+Arrows moving between fields when editing?
- *
- * @global boolean $cfg['CtrlArrowsMoving']
- */
-$cfg['CtrlArrowsMoving'] = true;
-
-/**
  * Max field data length in browse mode for all non-numeric fields
  *
  * @global integer $cfg['LimitChars']
@@ -2124,20 +2307,14 @@ $cfg['CtrlArrowsMoving'] = true;
 $cfg['LimitChars'] = 50;
 
 /**
- * show edit/delete links on left side of browse
- * (or at the top with vertical browse)
+ * Where to show the edit/copy/delete links in browse mode
+ * Possible values are 'left', 'right', 'both' and 'none';
+ * which will be interpreted as 'top', 'bottom', 'both' and 'none'
+ * respectively for vertical display mode
  *
- * @global boolean $cfg['ModifyDeleteAtLeft']
+ * @global string $cfg['RowActionLinks']
  */
-$cfg['ModifyDeleteAtLeft'] = true;
-
-/**
- * show edit/delete links on right side of browse
- * (or at the bottom with vertical browse)
- *
- * @global boolean $cfg['ModifyDeleteAtRight']
- */
-$cfg['ModifyDeleteAtRight'] = false;
+$cfg['RowActionLinks'] = 'left';
 
 /**
  * default display direction (horizontal|vertical|horizontalflipped)
@@ -2147,21 +2324,19 @@ $cfg['ModifyDeleteAtRight'] = false;
 $cfg['DefaultDisplay'] = 'horizontal';
 
 /**
- * default display direction for altering/creating columns (tbl_properties)
- * (horizontal|vertical|<number>)
- * number indicates maximal number for which vertical model is used
+ * remember the last way a table sorted
  *
- * @global integer $cfg['DefaultPropDisplay']
+ * @global string $cfg['RememberSorting']
  */
-$cfg['DefaultPropDisplay'] = 3;
+$cfg['RememberSorting'] = true;
 
 /**
- * table-header rotation via faking or CSS? (css|fake)
+ * table-header rotation via faking or CSS? (css|fake|auto)
  * NOTE: CSS only works in IE browsers!
  *
  * @global string $cfg['HeaderFlipType']
  */
-$cfg['HeaderFlipType'] = 'css';
+$cfg['HeaderFlipType'] = 'auto';
 
 /**
  * shows stored relation-comments in 'browse' mode.
@@ -2176,6 +2351,16 @@ $cfg['ShowBrowseComments'] = true;
  * @global boolean $cfg['ShowPropertyComments']
  */
 $cfg['ShowPropertyComments']= true;
+
+/**
+ * save edited cell(s) in browse-mode at once.
+ */
+$cfg['SaveCellsAtOnce'] = false;
+
+/**
+ * shows table display direction.
+ */
+$cfg['ShowDisplayDirection'] = false;
 
 /**
  * repeat header names every X cells? (0 = deactivate)
@@ -2248,15 +2433,7 @@ $cfg['MaxExactCount'] = 20000;
  *
  * @global integer $cfg['MaxExactCountViews']
  */
-$cfg['MaxExactCountViews'] = 0;
-
-/**
- * Utilize DHTML/JS capabilities to allow WYSIWYG editing of
- * the PDF page editor. Requires an IE6/Gecko based browser.
- *
- * @global boolean $cfg['WYSIWYG-PDF']
- */
-$cfg['WYSIWYG-PDF'] = true;
+$cfg['MaxExactCountViews'] = 100000;
 
 /**
  * Sort table and database in natural order
@@ -2267,21 +2444,24 @@ $cfg['NaturalOrder'] = true;
 
 /**
  * Initial state for sliders
- * (open | closed)
+ * (open | closed | disabled)
  *
  * @global string $cfg['InitialSlidersState']
  */
 $cfg['InitialSlidersState'] = 'closed';
 
-
-
-//-----------------------------------------------------------------------------
-// custom-setup by mkkeck: 2004-05-04
-//    some specials for new icons and scrolling
 /**
- * @todo 2004-05-08 rabus: We need to rearrange these variables.
+ * User preferences: disallow these settings
+ * For possible setting names look in libraries/config/user_preferences.forms.php
+ *
+ * @global array $cfg['UserprefsDisallow']
  */
+$cfg['UserprefsDisallow'] = array();
 
+/**
+ * User preferences: enable the Developer tab
+ */
+$cfg['UserprefsDeveloperTab'] = false;
 
 /*******************************************************************************
  * Window title settings
@@ -2329,7 +2509,7 @@ $cfg['ErrorIconic'] = true;
 $cfg['MainPageIconic'] = true;
 
 /**
- * show help button instead of strDocu (true|false)?
+ * show help button instead of Documentation text (true|false)?
  *
  * @global boolean $cfg['ReplaceHelpImg']
  */
@@ -2361,7 +2541,7 @@ $cfg['ThemeManager'] = true;
  *
  * @global string $cfg['ThemeDefault']
  */
-$cfg['ThemeDefault'] = 'original';
+$cfg['ThemeDefault'] = 'pmahomme';
 
 /**
  * allow different theme for each configured server
@@ -2376,22 +2556,14 @@ $cfg['ThemePerServer'] = false;
  */
 
 /**
- * Default queries
- * %d will be replaced by the database name.
- * %t will be replaced by the table name.
- * %f will be replaced by a list of field names.
- * (%t and %f only applies to DefaultQueryTable)
+ * Default query for table
  *
  * @global string $cfg['DefaultQueryTable']
  */
-$cfg['DefaultQueryTable'] = 'SELECT * FROM %t WHERE 1';
+$cfg['DefaultQueryTable'] = 'SELECT * FROM @TABLE@ WHERE 1';
 
 /**
- * Default queries
- * %d will be replaced by the database name.
- * %t will be replaced by the table name.
- * %f will be replaced by a list of field names.
- * (%t and %f only applies to DefaultQueryTable)
+ * Default query for database
  *
  * @global string $cfg['DefaultQueryDatabase']
  */
@@ -2466,7 +2638,6 @@ $cfg['SaveDir'] = '';
 
 /**
  * Directory where phpMyAdmin can save temporary files.
- * This is needed for MS Excel export, see documentation how to enable that.
  *
  * @global string $cfg['TempDir']
  */
@@ -2505,8 +2676,18 @@ $cfg['CheckConfigurationPermissions'] = true;
  * Limit for length of URL in links. When length would be above this limit, it
  * is replaced by form with button.
  * This is required as some web servers (IIS) have problems with long URLs.
+ * The recommended limit is 2000
+ * (see http://www.boutell.com/newfaq/misc/urllength.html) but we put
+ * 1000 to accommodate Suhosin, see bug #3358750.
  */
 $cfg['LinkLengthLimit'] = 1000;
+
+/**
+ * Disable the table maintenance mass operations, like optimizing or
+ * repairing the selected tables of a database. An accidental execution
+ * of such a maintenance task can enormously slow down a bigger database.
+ */
+$cfg['DisableMultiTableMaintenance'] = false;
 
 /*******************************************************************************
  * SQL Parser Settings
@@ -2584,29 +2765,6 @@ $cfg['DBG'] = array();
  */
 $cfg['DBG']['sql'] = false;
 
-/**
- * Make the DBG stuff available
- * To use the following, please install the DBG extension from http://dd.cron.ru/dbg/
- *
- * @global boolean $cfg['DBG']['php']
- */
-$cfg['DBG']['php'] = false;
-
-/**
- * Produce profiling results of PHP
- *
- * @global boolean $cfg['DBG']['profile']['enable']
- */
-$cfg['DBG']['profile']['enable'] = false;
-
-/**
- * Threshold of long running code to display
- * Anything below the threshold is not displayed
- *
- * @global float $cfg['DBG']['profile']['threshold']
- */
-$cfg['DBG']['profile']['threshold'] = 0.5;
-
 
 /*******************************************************************************
  * MySQL settings
@@ -2616,325 +2774,49 @@ $cfg['DBG']['profile']['threshold'] = 0.5;
  * Column types;
  * VARCHAR, TINYINT, TEXT and DATE are listed first, based on estimated popularity
  *
+ * This variable is filled in data_*.inc.php
+ *
  * @global array $cfg['ColumnTypes']
  */
-$cfg['ColumnTypes'] = array(
-    // most used
-    'INT',
-    'VARCHAR',
-    'TEXT',
-    'DATE',
-
-    // numeric
-    'NUMERIC' => array(
-        'TINYINT',
-        'SMALLINT',
-        'MEDIUMINT',
-        'INT',
-        'BIGINT',
-        '-',
-        'DECIMAL',
-        'FLOAT',
-        'DOUBLE',
-        'REAL',
-        '-',
-        'BIT',
-        'BOOLEAN',
-        'SERIAL',
-    ),
-
-
-    // Date/Time
-    'DATE and TIME' => array(
-        'DATE',
-        'DATETIME',
-        'TIMESTAMP',
-        'TIME',
-        'YEAR',
-    ),
-
-    // Text
-    'STRING' => array(
-        'CHAR',
-        'VARCHAR',
-        '-',
-        'TINYTEXT',
-        'TEXT',
-        'MEDIUMTEXT',
-        'LONGTEXT',
-        '-',
-        'BINARY',
-        'VARBINARY',
-        '-',
-        'TINYBLOB',
-        'MEDIUMBLOB',
-        'BLOB',
-        'LONGBLOB',
-        '-',
-        'ENUM',
-        'SET',
-    ),
-
-    'SPATIAL' => array(
-        'GEOMETRY',
-        'POINT',
-        'LINESTRING',
-        'POLYGON',
-        'MULTIPOINT',
-        'MULTILINESTRING',
-        'MULTIPOLYGON',
-        'GEOMETRYCOLLECTION',
-    ),
-);
+$cfg['ColumnTypes'] = array();
 
 /**
  * Attributes
  *
+ * This variable is filled in data_*.inc.php
+ *
  * @global array $cfg['AttributeTypes']
  */
-$cfg['AttributeTypes'] = array(
-   '',
-   'BINARY',
-   'UNSIGNED',
-   'UNSIGNED ZEROFILL',
-   'on update CURRENT_TIMESTAMP',
-);
+$cfg['AttributeTypes'] = array();
 
 
 if ($cfg['ShowFunctionFields']) {
     /**
      * Available functions
      *
+     * This variable is filled in data_*.inc.php
+     *
      * @global array $cfg['Functions']
      */
-    $cfg['Functions'] = array(
-        'ABS',
-        'ACOS',
-        'ASCII',
-        'ASIN',
-        'ATAN',
-        'BIN',
-        'BIT_COUNT',
-        'BIT_LENGTH',
-        'CEILING',
-        'CHAR',
-        'CHAR_LENGTH',
-        'COMPRESS',
-        'COS',
-        'COT',
-        'CRC32',
-        'CURDATE',
-        'CURRENT_USER',
-        'CURTIME',
-        'DATE',
-        'DAYNAME',
-        'DEGREES',
-        'DES_DECRYPT',
-        'DES_ENCRYPT',
-        'ENCRYPT',
-        'EXP',
-        'FLOOR',
-        'FROM_DAYS',
-        'FROM_UNIXTIME',
-        'HEX',
-        'INET_ATON',
-        'INET_NTOA',
-        'LENGTH',
-        'LN',
-        'LOG',
-        'LOG10',
-        'LOG2',
-        'LOWER',
-        'MD5',
-        'NOW',
-        'OCT',
-        'OLD_PASSWORD',
-        'ORD',
-        'PASSWORD',
-        'RADIANS',
-        'RAND',
-        'REVERSE',
-        'ROUND',
-        'SEC_TO_TIME',
-        'SHA1',
-        'SOUNDEX',
-        'SPACE',
-        'SQRT',
-        'STDDEV_POP',
-        'STDDEV_SAMP',
-        'TAN',
-        'TIMESTAMP',
-        'TIME_TO_SEC',
-        'UNCOMPRESS',
-        'UNHEX',
-        'UNIX_TIMESTAMP',
-        'UPPER',
-        'USER',
-        'UTC_DATE',
-        'UTC_TIME',
-        'UTC_TIMESTAMP',
-        'UUID',
-        'VAR_POP',
-        'VAR_SAMP',
-        'YEAR',
-    );
+    $cfg['Functions'] = array();
 
     /**
      * Which column types will be mapped to which Group?
      *
+     * This variable is filled in data_*.inc.php
+     *
      * @global array $cfg['RestrictColumnTypes']
      */
-    $cfg['RestrictColumnTypes'] = array(
-        'TINYINT'   => 'FUNC_NUMBER',
-        'SMALLINT'  => 'FUNC_NUMBER',
-        'MEDIUMINT' => 'FUNC_NUMBER',
-        'INT'       => 'FUNC_NUMBER',
-        'BIGINT'    => 'FUNC_NUMBER',
-        'DECIMAL'   => 'FUNC_NUMBER',
-        'FLOAT'     => 'FUNC_NUMBER',
-        'DOUBLE'    => 'FUNC_NUMBER',
-        'REAL'      => 'FUNC_NUMBER',
-        'BIT'       => 'FUNC_NUMBER',
-        'BOOLEAN'   => 'FUNC_NUMBER',
-        'SERIAL'    => 'FUNC_NUMBER',
-
-        'DATE'      => 'FUNC_DATE',
-        'DATETIME'  => 'FUNC_DATE',
-        'TIMESTAMP' => 'FUNC_DATE',
-        'TIME'      => 'FUNC_DATE',
-        'YEAR'      => 'FUNC_DATE',
-
-        'CHAR'          => 'FUNC_CHAR',
-        'VARCHAR'       => 'FUNC_CHAR',
-        'TINYTEXT'      => 'FUNC_CHAR',
-        'TEXT'          => 'FUNC_CHAR',
-        'MEDIUMTEXT'    => 'FUNC_CHAR',
-        'LONGTEXT'      => 'FUNC_CHAR',
-        'BINARY'        => 'FUNC_CHAR',
-        'VARBINARY'     => 'FUNC_CHAR',
-        'TINYBLOB'      => 'FUNC_CHAR',
-        'MEDIUMBLOB'    => 'FUNC_CHAR',
-        'BLOB'          => 'FUNC_CHAR',
-        'LONGBLOB'      => 'FUNC_CHAR',
-        'ENUM'          => '',
-        'SET'           => '',
-
-        'GEOMETRY'              => 'FUNC_SPATIAL',
-        'POINT'                 => 'FUNC_SPATIAL',
-        'LINESTRING'            => 'FUNC_SPATIAL',
-        'POLYGON'               => 'FUNC_SPATIAL',
-        'MULTIPOINT'            => 'FUNC_SPATIAL',
-        'MULTILINESTRING'       => 'FUNC_SPATIAL',
-        'MULTIPOLYGON'          => 'FUNC_SPATIAL',
-        'GEOMETRYCOLLECTION'    => 'FUNC_SPATIAL',
-
-    );
+    $cfg['RestrictColumnTypes'] = array();
 
     /**
      * Map above defined groups to any function
      *
+     * This variable is filled in data_*.inc.php
+     *
      * @global array $cfg['RestrictFunctions']
      */
-    $cfg['RestrictFunctions'] = array(
-        'FUNC_CHAR' => array(
-            'BIN',
-            'CHAR',
-            'CURRENT_USER',
-            'COMPRESS',
-            'DAYNAME',
-            'DES_DECRYPT',
-            'DES_ENCRYPT',
-            'ENCRYPT',
-            'HEX',
-            'INET_NTOA',
-            'LOWER',
-            'MD5',
-            'OLD_PASSWORD',
-            'PASSWORD',
-            'REVERSE',
-            'SHA1',
-            'SOUNDEX',
-            'SPACE',
-            'UNCOMPRESS',
-            'UNHEX',
-            'UPPER',
-            'USER',
-            'UUID',
-        ),
-
-        'FUNC_DATE' => array(
-            'CURDATE',
-            'CURTIME',
-            'DATE',
-            'FROM_DAYS',
-            'FROM_UNIXTIME',
-            'NOW',
-            'SEC_TO_TIME',
-            'TIMESTAMP',
-            'UTC_DATE',
-            'UTC_TIME',
-            'UTC_TIMESTAMP',
-            'YEAR',
-        ),
-
-        'FUNC_NUMBER' => array(
-            'ABS',
-            'ACOS',
-            'ASCII',
-            'ASIN',
-            'ATAN',
-            'BIT_LENGTH',
-            'BIT_COUNT',
-            'CEILING',
-            'CHAR_LENGTH',
-            'COS',
-            'COT',
-            'CRC32',
-            'DEGREES',
-            'EXP',
-            'FLOOR',
-            'INET_ATON',
-            'LENGTH',
-            'LN',
-            'LOG',
-            'LOG2',
-            'LOG10',
-            'OCT',
-            'ORD',
-            'RADIANS',
-            'RAND',
-            'ROUND',
-            'SQRT',
-            'STDDEV_POP',
-            'STDDEV_SAMP',
-            'TAN',
-            'TIME_TO_SEC',
-            'UNIX_TIMESTAMP',
-            'VAR_POP',
-            'VAR_SAMP',
-        ),
-
-        'FUNC_SPATIAL' => array(
-            'GeomFromText',
-            'GeomFromWKB',
-
-            'GeomCollFromText',
-            'LineFromText',
-            'MLineFromText',
-            'PointFromText',
-            'MPointFromText',
-            'PolyFromText',
-            'MPolyFromText',
-
-            'GeomCollFromWKB',
-            'LineFromWKB',
-            'MLineFromWKB',
-            'PointFromWKB',
-            'MPointFromWKB',
-            'PolyFromWKB',
-            'MPolyFromWKB',
-        ),
-    );
+    $cfg['RestrictFunctions'] = array();
 
     /**
      * Default functions for above defined groups
@@ -2945,11 +2827,10 @@ if ($cfg['ShowFunctionFields']) {
         'FUNC_CHAR' => '',
         'FUNC_DATE' => '',
         'FUNC_NUMBER' => '',
+        'FUNC_SPATIAL' => 'GeomFromText',
+        'FUNC_UUID' => 'UUID',
         'first_timestamp' => 'NOW',
-        'pk_char36' => 'UUID',
     );
-
-
 } // end if
 
 /**
@@ -2966,6 +2847,10 @@ $cfg['NumOperators'] = array(
    '!=',
    'LIKE',
    'NOT LIKE',
+   'IN (...)',
+   'NOT IN (...)',
+   'BETWEEN',
+   'NOT BETWEEN',
 );
 
 /**
@@ -2980,9 +2865,14 @@ $cfg['TextOperators'] = array(
    '=',
    '!=',
    'REGEXP',
+   'REGEXP ^...$',
    'NOT REGEXP',
    "= ''",
-   "!= ''"
+   "!= ''",
+   'IN (...)',
+   'NOT IN (...)',
+   'BETWEEN',
+   'NOT BETWEEN',
 );
 
 /**
@@ -3026,5 +2916,10 @@ $cfg['UnaryOperators'] = array(
    "= ''" => 1,
    "!= ''" => 1
 );
+
+/**
+ * Max rows retreived for zoom search
+ */
+$cfg['maxRowPlotLimit'] = 500;
 
 ?>

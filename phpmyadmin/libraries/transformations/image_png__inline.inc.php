@@ -1,15 +1,22 @@
 <?php
 /* vim: set expandtab sw=4 ts=4 sts=4: */
 /**
- * @package phpMyAdmin-Transformation
- * @version $Id: image_png__inline.inc.php 11973 2008-11-24 09:30:37Z nijel $
+ * @package PhpMyAdmin-Transformation
  */
+
+function PMA_transformation_image_png__inline_info()
+{
+    return array(
+        'info' => __('Displays a clickable thumbnail. The options are the maximum width and height in pixels. The original aspect ratio is preserved.'),
+        );
+}
 
 /**
  *
  */
-function PMA_transformation_image_png__inline($buffer, $options = array(), $meta = '') {
-    require_once './libraries/transformations/global.inc.php';
+function PMA_transformation_image_png__inline($buffer, $options = array(), $meta = '')
+{
+    include_once './libraries/transformations/global.inc.php';
 
     if (PMA_IS_GD2) {
         $transform_options = array ('string' => '<a href="transformation_wrapper.php' . $options['wrapper_link'] . '" target="_blank"><img src="transformation_wrapper.php' . $options['wrapper_link'] . '&amp;resize=png&amp;newWidth=' . (isset($options[0]) ? $options[0] : '100') . '&amp;newHeight=' . (isset($options[1]) ? $options[1] : 100) . '" alt="[__BUFFER__]" border="0" /></a>');

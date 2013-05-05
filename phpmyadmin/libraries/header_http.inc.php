@@ -2,8 +2,7 @@
 /* vim: set expandtab sw=4 ts=4 sts=4: */
 /**
  *
- * @version $Id: header_http.inc.php 13239 2010-01-13 13:03:56Z nijel $
- * @package phpMyAdmin
+ * @package PhpMyAdmin
  */
 if (! defined('PHPMYADMIN')) {
     exit;
@@ -13,7 +12,7 @@ if (! defined('PHPMYADMIN')) {
  *
  */
 if (isset($_REQUEST['GLOBALS']) || isset($_FILES['GLOBALS'])) {
-    die("GLOBALS overwrite attempt");
+    die(__("GLOBALS overwrite attempt"));
 }
 
 /**
@@ -23,13 +22,12 @@ $GLOBALS['now'] = gmdate('D, d M Y H:i:s') . ' GMT';
 /* Prevent against ClickJacking by allowing frames only from same origin */
 if (!$GLOBALS['cfg']['AllowThirdPartyFraming']) {
     header('X-Frame-Options: SAMEORIGIN');
+    header('X-Content-Security-Policy: allow \'self\'; options inline-script eval-script; frame-ancestors \'self\'; img-src \'self\' data:; script-src \'self\' http://www.phpmyadmin.net');
+    header('X-WebKit-CSP: default-src \'self\' \'unsafe-inline\'; img-src \'self\' data:; script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' http://www.phpmyadmin.net');
 }
-header('Expires: ' . $GLOBALS['now']); // rfc2616 - Section 14.21
-header('Last-Modified: ' . $GLOBALS['now']);
-header('Cache-Control: no-store, no-cache, must-revalidate, pre-check=0, post-check=0, max-age=0'); // HTTP/1.1
-header('Pragma: no-cache'); // HTTP/1.0
+PMA_no_cache_header();
 if (!defined('IS_TRANSFORMATION_WRAPPER')) {
     // Define the charset to be used
-    header('Content-Type: text/html; charset=' . $GLOBALS['charset']);
+    header('Content-Type: text/html; charset=utf-8');
 }
 ?>

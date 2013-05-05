@@ -6,8 +6,7 @@
  * variables from them. It does the same work for $HTTP_ACCEPT_LANGUAGE and
  * $HTTP_AUTHORIZATION.
  *
- * @version $Id: grab_globals.lib.php 11986 2008-11-24 11:05:40Z nijel $
- * @package phpMyAdmin
+ * @package PhpMyAdmin
  */
 if (! defined('PHPMYADMIN')) {
     exit;
@@ -16,14 +15,10 @@ if (! defined('PHPMYADMIN')) {
 /**
  * copy values from one array to another, usually from a superglobal into $GLOBALS
  *
- * @uses    $GLOBALS['_import_blacklist']
- * @uses    preg_replace()
- * @uses    array_keys()
- * @uses    array_unique()
- * @uses    stripslashes()
- * @param   array   $array      values from
- * @param   array   $target     values to
- * @param   boolean $sanitize   prevent importing key names in $_import_blacklist
+ * @param array   $array      values from
+ * @param array   &$target    values to
+ * @param bool    $sanitize   prevent importing key names in $_import_blacklist
+ * @return bool
  */
 function PMA_recursive_extract($array, &$target, $sanitize = true)
 {
@@ -71,7 +66,6 @@ $_import_blacklist = array(
     '/^goto$/i',        // page to display
     '/^back$/i',        // the page go back
     '/^lang$/i',        // selected language
-    '/^convcharset$/i', // PMA convert charset
     '/^collation_connection$/i', //
     '/^set_theme$/i',   //
     '/^sql_query$/i',   // the query to be executed

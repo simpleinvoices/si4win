@@ -1,13 +1,12 @@
 <?php
 /* vim: set expandtab sw=4 ts=4 sts=4: */
 /**
- * @version $Id: bdb.lib.php 11981 2008-11-24 10:18:44Z nijel $
- * @package phpMyAdmin-Engines
+ * @package PhpMyAdmin-Engines
  */
 
 /**
  *
- * @package phpMyAdmin-Engines
+ * @package PhpMyAdmin-Engines
  */
 class PMA_StorageEngine_bdb extends PMA_StorageEngine
 {
@@ -18,7 +17,7 @@ class PMA_StorageEngine_bdb extends PMA_StorageEngine
     {
         return array(
             'version_bdb' => array(
-                'title' => $GLOBALS['strVersionInformation'],
+                'title' => __('Version information'),
             ),
             'bdb_cache_size' => array(
                 'type'  => PMA_ENGINE_DETAILS_TYPE_SIZE,

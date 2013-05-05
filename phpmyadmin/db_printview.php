@@ -2,8 +2,7 @@
 /* vim: set expandtab sw=4 ts=4 sts=4: */
 /**
  *
- * @version $Id: db_printview.php 12242 2009-02-20 09:22:20Z lem9 $
- * @package phpMyAdmin
+ * @package PhpMyAdmin
  */
 
 /**
@@ -27,7 +26,6 @@ $err_url = 'db_sql.php?' . PMA_generate_common_url($db);
 /**
  * Settings for relations stuff
  */
-require_once './libraries/relation.lib.php';
 $cfgRelation = PMA_getRelationsParam();
 
 /**
@@ -36,7 +34,7 @@ $cfgRelation = PMA_getRelationsParam();
  *
  * @todo merge this speedup _optionaly_ into PMA_DBI_get_tables_full()
  *
-// staybyte: speedup view on locked tables - 11 June 2001
+// speedup view on locked tables
 // Special speedup for newer MySQL Versions (in 4.0 format changed)
 if ($cfg['SkipLockedTables'] == true) {
     $result = PMA_DBI_query('SHOW OPEN TABLES FROM ' . PMA_backquote($db) . ';');
@@ -54,8 +52,8 @@ if ($cfg['SkipLockedTables'] == true) {
             $result      = PMA_DBI_query('SHOW TABLES FROM ' . PMA_backquote($db) . ';', null, PMA_DBI_QUERY_STORE);
             if ($result != false && PMA_DBI_num_rows($result) > 0) {
                 while ($tmp = PMA_DBI_fetch_row($result)) {
-                    if (!isset($sot_cache[$tmp[0]])) {
-                        $sts_result  = PMA_DBI_query('SHOW TABLE STATUS FROM ' . PMA_backquote($db) . ' LIKE \'' . addslashes($tmp[0]) . '\';');
+                    if (! isset($sot_cache[$tmp[0]])) {
+                        $sts_result  = PMA_DBI_query('SHOW TABLE STATUS FROM ' . PMA_backquote($db) . ' LIKE \'' . PMA_sqlAddSlashes($tmp[0], true) . '\';');
                         $sts_tmp     = PMA_DBI_fetch_assoc($sts_result);
                         $tables[]    = $sts_tmp;
                     } else { // table in use
@@ -93,23 +91,22 @@ echo '<br />';
 
 // 1. No table
 if ($num_tables == 0) {
-    echo $strNoTablesFound;
-}
-// 2. Shows table informations on mysql >= 3.23.03 - staybyte - 11 June 2001
-else {
+    echo __('No tables found in database.');
+} else {
+// 2. Shows table information
     ?>
 <table>
 <thead>
 <tr>
-    <th><?php echo $strTable; ?></th>
-    <th><?php echo $strRecords; ?></th>
-    <th><?php echo $strType; ?></th>
+    <th><?php echo __('Table'); ?></th>
+    <th><?php echo __('Rows'); ?></th>
+    <th><?php echo __('Type'); ?></th>
     <?php
     if ($cfg['ShowStats']) {
-        echo '<th>' . $strSize . '</th>';
+        echo '<th>' . __('Size') . '</th>';
     }
     ?>
-    <th><?php echo $strComments; ?></th>
+    <th><?php echo __('Comments'); ?></th>
 </tr>
 </thead>
 <tbody>
@@ -117,7 +114,7 @@ else {
     $sum_entries = $sum_size = 0;
     $odd_row = true;
     foreach ($tables as $sts_data) {
-        if (strtoupper($sts_data['ENGINE']) == 'MRG_MYISAM'
+        if (PMA_Table::isMerge($db, $sts_data['TABLE_NAME'])
          || strtoupper($sts_data['ENGINE']) == 'FEDERATED') {
             $merged_size = true;
         } else {
@@ -159,7 +156,7 @@ else {
         } else {
             ?>
     <td colspan="3" align="center">
-        <?php echo $strInUse; ?>
+        <?php echo __('in use'); ?>
     </td>
             <?php
         }
@@ -184,7 +181,7 @@ else {
             if (! empty($sts_data['Create_time'])) {
                 ?>
                 <tr>
-                    <td align="right"><?php echo $strStatCreateTime . ': '; ?></td>
+                    <td align="right"><?php echo __('Creation') . ': '; ?></td>
                     <td align="right"><?php echo PMA_localisedDate(strtotime($sts_data['Create_time'])); ?></td>
                 </tr>
                 <?php
@@ -193,7 +190,7 @@ else {
             if (! empty($sts_data['Update_time'])) {
                 ?>
                 <tr>
-                    <td align="right"><?php echo $strStatUpdateTime . ': '; ?></td>
+                    <td align="right"><?php echo __('Last update') . ': '; ?></td>
                     <td align="right"><?php echo PMA_localisedDate(strtotime($sts_data['Update_time'])); ?></td>
                 </tr>
                 <?php
@@ -202,7 +199,7 @@ else {
             if (! empty($sts_data['Check_time'])) {
                 ?>
                 <tr>
-                    <td align="right"><?php echo $strStatCheckTime . ': '; ?></td>
+                    <td align="right"><?php echo __('Last check') . ': '; ?></td>
                     <td align="right"><?php echo PMA_localisedDate(strtotime($sts_data['Check_time'])); ?></td>
                 </tr>
                 <?php
@@ -219,7 +216,7 @@ else {
     ?>
 <tr>
     <th align="center">
-        <?php echo sprintf($strTables, PMA_formatNumber($num_tables, 0)); ?>
+        <?php echo sprintf(_ngettext('%s table', '%s tables', $num_tables), PMA_formatNumber($num_tables, 0)); ?>
     </th>
     <th align="right" nowrap="nowrap">
         <?php echo PMA_formatNumber($sum_entries, 0); ?>
@@ -247,24 +244,9 @@ else {
 /**
  * Displays the footer
  */
-?>
+PMA_printButton();
 
-<script type="text/javascript">
-//<![CDATA[
-function printPage()
-{
-    // Do print the page
-    if (typeof(window.print) != 'undefined') {
-        window.print();
-    }
-}
-//]]>
-</script>
-<br /><br />
+echo "<div id='PMA_disable_floating_menubar'></div>\n";
 
-<input type="button" class="print_ignore"
-    id="print" value="<?php echo $strPrint; ?>" onclick="printPage()" />
-
-<?php
-require_once './libraries/footer.inc.php';
+require './libraries/footer.inc.php';
 ?>

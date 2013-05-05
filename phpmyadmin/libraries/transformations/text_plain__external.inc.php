@@ -1,14 +1,21 @@
 <?php
 /* vim: set expandtab sw=4 ts=4 sts=4: */
 /**
- * @package phpMyAdmin-Transformation
- * @version $Id: text_plain__external.inc.php 11973 2008-11-24 09:30:37Z nijel $
+ * @package PhpMyAdmin-Transformation
  */
+
+function PMA_transformation_text_plain__external_info()
+{
+    return array(
+        'info' => __('LINUX ONLY: Launches an external application and feeds it the column data via standard input. Returns the standard output of the application. The default is Tidy, to pretty-print HTML code. For security reasons, you have to manually edit the file libraries/transformations/text_plain__external.inc.php and list the tools you want to make available. The first option is then the number of the program you want to use and the second option is the parameters for the program. The third option, if set to 1, will convert the output using htmlspecialchars() (Default 1). The fourth option, if set to 1, will prevent wrapping and ensure that the output appears all on one line (Default 1).'),
+        );
+}
 
 /**
  *
  */
-function PMA_transformation_text_plain__external_nowrap($options = array()) {
+function PMA_transformation_text_plain__external_nowrap($options = array())
+{
     if (!isset($options[3]) || $options[3] == '') {
         $nowrap = true;
     } elseif ($options[3] == '1' || $options[3] == 1) {
@@ -20,7 +27,8 @@ function PMA_transformation_text_plain__external_nowrap($options = array()) {
     return $nowrap;
 }
 
-function PMA_transformation_text_plain__external($buffer, $options = array(), $meta = '') {
+function PMA_transformation_text_plain__external($buffer, $options = array(), $meta = '')
+{
     // possibly use a global transform and feed it with special options:
     // include './libraries/transformations/global.inc.php';
 

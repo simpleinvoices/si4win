@@ -22,8 +22,7 @@
  * warnings about the lack of privileges for CREATE TABLE. Tested
  * on MySQL 5.0.18.
  *
- * @version $Id: display_create_table.lib.php 11986 2008-11-24 11:05:40Z nijel $
- * @package phpMyAdmin
+ * @package PhpMyAdmin
  */
 if (! defined('PHPMYADMIN')) {
     exit;
@@ -37,29 +36,28 @@ require_once './libraries/check_user_privileges.lib.php';
 $is_create_table_priv = true;
 
 ?>
-<form method="post" action="tbl_create.php"
-    onsubmit="return (emptyFormElements(this, 'table') &amp;&amp; checkFormElementInRange(this, 'num_fields', '<?php echo str_replace('\'', '\\\'', $GLOBALS['strInvalidFieldCount']); ?>', 1))">
+    <form id="create_table_form_minimal" method="post" action="tbl_create.php"<?php echo ($GLOBALS['cfg']['AjaxEnable'] ? ' class="ajax"' : ''); ?>>
 <fieldset>
     <legend>
 <?php
 if ($GLOBALS['cfg']['PropertiesIconic']) {
-    echo '<img class="icon" src="' . $pmaThemeImage . 'b_newtbl.png" width="16" height="16" alt="" />';
+    echo PMA_getImage('b_newtbl.png');
 }
-echo sprintf($strCreateNewTable, PMA_getDbLink());
+echo __('Create table');
 ?>
     </legend>
     <?php echo PMA_generate_common_hidden_inputs($db); ?>
     <div class="formelement">
-        <?php echo $strName; ?>:
+        <?php echo __('Name'); ?>:
         <input type="text" name="table" maxlength="64" size="30" />
     </div>
     <div class="formelement">
-        <?php echo $strNumberOfFields; ?>:
+        <?php echo __('Number of columns'); ?>:
         <input type="text" name="num_fields" size="2" />
     </div>
     <div class="clearfloat"></div>
 </fieldset>
 <fieldset class="tblFooters">
-    <input type="submit" value="<?php echo $strGo; ?>" />
+    <input type="submit" value="<?php echo __('Go'); ?>" />
 </fieldset>
 </form>

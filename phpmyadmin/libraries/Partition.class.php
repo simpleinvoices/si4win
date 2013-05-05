@@ -3,14 +3,13 @@
 /**
  * Library for extracting information about the partitions
  *
- * @version $Id: Partition.class.php 11986 2008-11-24 11:05:40Z nijel $
- * @package phpMyAdmin
+ * @package PhpMyAdmin
  */
 
 
 /**
  * base Partition Class
- * @package phpMyAdmin
+ * @package PhpMyAdmin
  */
 class PMA_Partition
 {
@@ -18,7 +17,6 @@ class PMA_Partition
      * returns array of partition names for a specific db/table
      *
      * @access  public
-     * @uses    PMA_DBI_fetch_result()
      * @return  array   of partition names
      */
     static public function getPartitionNames($db, $table)
@@ -37,7 +35,6 @@ class PMA_Partition
      * @staticvar boolean $have_partitioning
      * @staticvar boolean $already_checked
      * @access  public
-     * @uses    PMA_DBI_fetch_result()
      * @return  boolean
      */
     static public function havePartitioning()

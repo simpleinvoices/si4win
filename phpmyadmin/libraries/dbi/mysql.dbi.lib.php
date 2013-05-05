@@ -3,8 +3,7 @@
 /**
  * Interface to the classic MySQL extension
  *
- * @package phpMyAdmin-DBI-MySQL
- * @version $Id: mysql.dbi.lib.php 13170 2009-12-24 12:18:31Z lem9 $
+ * @package PhpMyAdmin-DBI-MySQL
  */
 if (! defined('PHPMYADMIN')) {
     exit;
@@ -21,18 +20,28 @@ if (! defined('PMA_MYSQL_CLIENT_API')) {
     unset($client_api);
 }
 
-function PMA_DBI_real_connect($server, $user, $password, $client_flags, $persistant=false)
+/**
+ * Helper function for connecting to the database server
+ *
+ * @param   string  $server
+ * @param   string  $user
+ * @param   string  $password
+ * @param   int     $client_flags
+ * @param   bool    $persistent
+ * @return  mixed   false on error or a mysql connection resource on success
+ */
+function PMA_DBI_real_connect($server, $user, $password, $client_flags, $persistent = false)
 {
     global $cfg;
 
     if (empty($client_flags)) {
-        if ($cfg['PersistentConnections'] || $persistant) {
+        if ($cfg['PersistentConnections'] || $persistent) {
             $link = @mysql_pconnect($server, $user, $password);
         } else {
             $link = @mysql_connect($server, $user, $password);
         }
     } else {
-        if ($cfg['PersistentConnections'] || $persistant) {
+        if ($cfg['PersistentConnections'] || $persistent) {
             $link = @mysql_pconnect($server, $user, $password, $client_flags);
         } else {
             $link = @mysql_connect($server, $user, $password, false, $client_flags);
@@ -41,18 +50,21 @@ function PMA_DBI_real_connect($server, $user, $password, $client_flags, $persist
 
     return $link;
 }
+
 /**
+ * connects to the database server
+ *
  * @param   string  $user           mysql user name
  * @param   string  $password       mysql user password
- * @param   boolean $is_controluser
- * @param   array   $server host/port/socket/persistant
- * @param   boolean $auxiliary_connection (when true, don't go back to login if connection fails)
+ * @param   bool    $is_controluser
+ * @param   array   $server host/port/socket/persistent
+ * @param   bool    $auxiliary_connection (when true, don't go back to login if connection fails)
  * @return  mixed   false on error or a mysqli object on success
  */
 function PMA_DBI_connect($user, $password, $is_controluser = false, $server = null, $auxiliary_connection = false)
 {
-    global $cfg, $php_errormsg;
-  
+    global $cfg;
+
     if ($server) {
         $server_port = (empty($server['port']))
             ? ''
@@ -60,20 +72,13 @@ function PMA_DBI_connect($user, $password, $is_controluser = false, $server = nu
         $server_socket = (empty($server['socket']))
             ? ''
             : ':' . $server['socket'];
-        $server_persistant = (empty($server['persistant']))
-            ? false
-            : true;
     } else {
-	  $server_port   = (empty($cfg['Server']['port']))
-                   ? ''
-                   : ':' . (int)$cfg['Server']['port'];
-	  $server_socket = (empty($cfg['Server']['socket']))
-                   ? ''
-                   : ':' . $cfg['Server']['socket'];
-    }
-
-    if (strtolower($cfg['Server']['connect_type']) == 'tcp') {
-        $cfg['Server']['socket'] = '';
+        $server_port   = (empty($cfg['Server']['port']))
+            ? ''
+            : ':' . (int)$cfg['Server']['port'];
+        $server_socket = (empty($cfg['Server']['socket']))
+            ? ''
+            : ':' . $cfg['Server']['socket'];
     }
 
     $client_flags = 0;
@@ -92,24 +97,24 @@ function PMA_DBI_connect($user, $password, $is_controluser = false, $server = nu
     if (defined('MYSQL_CLIENT_SSL') && $cfg['Server']['ssl']) {
         $client_flags |= MYSQL_CLIENT_SSL;
     }
-    
+
     if (!$server) {
-        $link = PMA_DBI_real_connect($cfg['Server']['host'] . $server_port . $server_socket, $user, $password, empty($client_flags) ? NULL : $client_flags);
+        $link = PMA_DBI_real_connect($cfg['Server']['host'] . $server_port . $server_socket, $user, $password, empty($client_flags) ? null : $client_flags);
 
       // Retry with empty password if we're allowed to
         if (empty($link) && $cfg['Server']['nopassword'] && !$is_controluser) {
-	        $link = PMA_DBI_real_connect($cfg['Server']['host'] . $server_port . $server_socket, $user, '', empty($client_flags) ? NULL : $client_flags);
+            $link = PMA_DBI_real_connect($cfg['Server']['host'] . $server_port . $server_socket, $user, '', empty($client_flags) ? null : $client_flags);
         }
     } else {
         if (!isset($server['host'])) {
-	        $link = PMA_DBI_real_connect($server_socket, $user, $password, NULL, $server_persistant); 
+            $link = PMA_DBI_real_connect($server_socket, $user, $password, null);
         } else {
-            $link = PMA_DBI_real_connect($server['host'] . $server_port . $server_socket, $user, $password, NULL, $server_persistant);
+            $link = PMA_DBI_real_connect($server['host'] . $server_port . $server_socket, $user, $password, null);
         }
     }
     if (empty($link)) {
         if ($is_controluser) {
-            trigger_error($GLOBALS['strControluserFailed'], E_USER_WARNING);
+            trigger_error(__('Connection for controluser as defined in your configuration failed.'), E_USER_WARNING);
             return false;
         }
         // we could be calling PMA_DBI_connect() to connect to another
@@ -129,11 +134,11 @@ function PMA_DBI_connect($user, $password, $is_controluser = false, $server = nu
 }
 
 /**
- * select a db
+ * selects given database
  *
- * @param string $dbname name of db to select
- * @param resource $link mysql link resource
- * @return boolean success
+ * @param string    $dbname  name of db to select
+ * @param resource  $link    mysql link resource
+ * @return bool
  */
 function PMA_DBI_select_db($dbname, $link = null)
 {
@@ -150,89 +155,61 @@ function PMA_DBI_select_db($dbname, $link = null)
 /**
  * runs a query and returns the result
  *
- * @param string $query query to run
- * @param resource $link mysql link resource
- * @param integer $options
+ * @param string    $query    query to run
+ * @param resource  $link     mysql link resource
+ * @param int       $options
  * @return mixed
  */
-function PMA_DBI_try_query($query, $link = null, $options = 0)
+function PMA_DBI_real_query($query, $link, $options)
 {
-    if (empty($link)) {
-        if (isset($GLOBALS['userlink'])) {
-            $link = $GLOBALS['userlink'];
-        } else {
-            return false;
-        }
-    }
-
-    if ($GLOBALS['cfg']['DBG']['sql']) {
-        $time = microtime(true);
-    }
     if ($options == ($options | PMA_DBI_QUERY_STORE)) {
-        $r = mysql_query($query, $link);
+        return mysql_query($query, $link);
     } elseif ($options == ($options | PMA_DBI_QUERY_UNBUFFERED)) {
-        $r = mysql_unbuffered_query($query, $link);
+        return mysql_unbuffered_query($query, $link);
     } else {
-        $r = mysql_query($query, $link);
+        return mysql_query($query, $link);
     }
-
-    if ($GLOBALS['cfg']['DBG']['sql']) {
-        $time = microtime(true) - $time;
-
-        $hash = md5($query);
-
-        if (isset($_SESSION['debug']['queries'][$hash])) {
-            $_SESSION['debug']['queries'][$hash]['count']++;
-        } else {
-            $_SESSION['debug']['queries'][$hash] = array();
-            $_SESSION['debug']['queries'][$hash]['count'] = 1;
-            $_SESSION['debug']['queries'][$hash]['query'] = $query;
-            $_SESSION['debug']['queries'][$hash]['time'] = $time;
-        }
-
-        $trace = array();
-        foreach (debug_backtrace() as $trace_step) {
-            $trace[] = PMA_Error::relPath($trace_step['file']) . '#'
-                . $trace_step['line'] . ': '
-                . (isset($trace_step['class']) ? $trace_step['class'] : '')
-                //. (isset($trace_step['object']) ? get_class($trace_step['object']) : '')
-                . (isset($trace_step['type']) ? $trace_step['type'] : '')
-                . (isset($trace_step['function']) ? $trace_step['function'] : '')
-                . '('
-                . (isset($trace_step['params']) ? implode(', ', $trace_step['params']) : '')
-                . ')'
-                ;
-        }
-        $_SESSION['debug']['queries'][$hash]['trace'][] = $trace;
-    }
-    if ($r != FALSE && PMA_Tracker::isActive() == TRUE ) {
-        PMA_Tracker::handleQuery($query); 
-    }
-
-    return $r;
 }
 
+/**
+ * returns array of rows with associative and numeric keys from $result
+ *
+ * @param   resource  $result
+ * @return  array
+ */
 function PMA_DBI_fetch_array($result)
 {
     return mysql_fetch_array($result, MYSQL_BOTH);
 }
 
-function PMA_DBI_fetch_assoc($result) {
+/**
+ * returns array of rows with associative keys from $result
+ *
+ * @param   resource  $result
+ * @return  array
+ */
+function PMA_DBI_fetch_assoc($result)
+{
     return mysql_fetch_array($result, MYSQL_ASSOC);
 }
 
+/**
+ * returns array of rows with numeric keys from $result
+ *
+ * @param   resource  $result
+ * @return  array
+ */
 function PMA_DBI_fetch_row($result)
 {
     return mysql_fetch_array($result, MYSQL_NUM);
 }
 
-/*
+/**
  * Adjusts the result pointer to an arbitrary row in the result
  *
- * @uses    mysql_data_seek()
  * @param   $result
  * @param   $offset
- * @return  boolean true on success, false on failure
+ * @return  bool true on success, false on failure
  */
 function PMA_DBI_data_seek($result, $offset)
 {
@@ -240,25 +217,49 @@ function PMA_DBI_data_seek($result, $offset)
 }
 
 /**
- * Frees the memory associated with the results
+ * Frees memory associated with the result
  *
- * @param result    $result,...     one or more mysql result resources
+ * @param  resource  $result
  */
-function PMA_DBI_free_result()
+function PMA_DBI_free_result($result)
 {
-    foreach (func_get_args() as $result) {
-        if (is_resource($result)
-         && get_resource_type($result) === 'mysql result') {
-            mysql_free_result($result);
-        }
+    if (is_resource($result) && get_resource_type($result) === 'mysql result') {
+        mysql_free_result($result);
     }
 }
 
 /**
+ * Check if there are any more query results from a multi query
+ *
+ * @return  bool         false
+ */
+function PMA_DBI_more_results()
+{
+    // N.B.: PHP's 'mysql' extension does not support
+    // multi_queries so this function will always
+    // return false. Use the 'mysqli' extension, if
+    // you need support for multi_queries.
+    return false;
+}
+
+/**
+ * Prepare next result from multi_query
+ *
+ * @return  boo         false
+ */
+function PMA_DBI_next_result()
+{
+    // N.B.: PHP's 'mysql' extension does not support
+    // multi_queries so this function will always
+    // return false. Use the 'mysqli' extension, if
+    // you need support for multi_queries.
+    return false;
+}
+
+/**
  * Returns a string representing the type of connection used
- * @uses    mysql_get_host_info()
- * @uses    $GLOBALS['userlink']    as default for $link
- * @param   resource        $link   mysql link
+ *
+ * @param   resource  $link  mysql link
  * @return  string          type of connection used
  */
 function PMA_DBI_get_host_info($link = null)
@@ -275,10 +276,9 @@ function PMA_DBI_get_host_info($link = null)
 
 /**
  * Returns the version of the MySQL protocol used
- * @uses    mysql_get_proto_info()
- * @uses    $GLOBALS['userlink']    as default for $link
- * @param   resource        $link   mysql link
- * @return  integer         version of the MySQL protocol used
+ *
+ * @param   resource  $link  mysql link
+ * @return  int         version of the MySQL protocol used
  */
 function PMA_DBI_get_proto_info($link = null)
 {
@@ -294,7 +294,7 @@ function PMA_DBI_get_proto_info($link = null)
 
 /**
  * returns a string that represents the client library version
- * @uses    mysql_get_client_info()
+ *
  * @return  string          MySQL client library version
  */
 function PMA_DBI_get_client_info()
@@ -305,22 +305,18 @@ function PMA_DBI_get_client_info()
 /**
  * returns last error message or false if no errors occured
  *
- * @uses    PMA_DBI_convert_message()
- * @uses    $GLOBALS['errno']
- * @uses    $GLOBALS['userlink']
- * @uses    $GLOBALS['strServerNotResponding']
- * @uses    $GLOBALS['strSocketProblem']
- * @uses    $GLOBALS['strDetails']
- * @uses    mysql_errno()
- * @uses    mysql_error()
- * @uses    defined()
- * @uses    PMA_generate_common_url()
- * @param   resource        $link   mysql link
- * @return  string|boolean  $error or false
+ * @param   resource  $link  mysql link
+ * @return  string|bool  $error or false
  */
 function PMA_DBI_getError($link = null)
 {
     $GLOBALS['errno'] = 0;
+
+    /* Treat false same as null because of controllink */
+    if ($link === false) {
+        $link = null;
+    }
+
     if (null === $link && isset($GLOBALS['userlink'])) {
         $link =& $GLOBALS['userlink'];
 
@@ -344,28 +340,15 @@ function PMA_DBI_getError($link = null)
     // keep the error number for further check after the call to PMA_DBI_getError()
     $GLOBALS['errno'] = $error_number;
 
-    if (! empty($error_message)) {
-        $error_message = PMA_DBI_convert_message($error_message);
-    }
-
-    // Some errors messages cannot be obtained by mysql_error()
-    if ($error_number == 2002) {
-        $error = '#' . ((string) $error_number) . ' - ' . $GLOBALS['strServerNotResponding'] . ' ' . $GLOBALS['strSocketProblem'];
-    } elseif ($error_number == 2003) {
-        $error = '#' . ((string) $error_number) . ' - ' . $GLOBALS['strServerNotResponding'];
-    } elseif ($error_number == 1005) {
-        /* InnoDB contraints, see
-         * http://dev.mysql.com/doc/refman/5.0/en/innodb-foreign-key-constraints.html
-         */
-        $error = '#' . ((string) $error_number) . ' - ' . $error_message .
-            ' (<a href="server_engines.php' . PMA_generate_common_url(array('engine' => 'InnoDB', 'page' => 'Status')).
-            '">' . $GLOBALS['strDetails'] . '</a>)';
-    } else {
-        $error = '#' . ((string) $error_number) . ' - ' . $error_message;
-    }
-    return $error;
+    return PMA_DBI_formatError($error_number, $error_message);
 }
 
+/**
+ * returns the number of rows returned by last query
+ *
+ * @param   resource  $result
+ * @return  string|int
+ */
 function PMA_DBI_num_rows($result)
 {
     if (!is_bool($result)) {
@@ -375,6 +358,12 @@ function PMA_DBI_num_rows($result)
     }
 }
 
+/**
+ * returns last inserted auto_increment id for given $link or $GLOBALS['userlink']
+ *
+ * @param   resource  $link  the mysql object
+ * @return  string|int
+ */
 function PMA_DBI_insert_id($link = null)
 {
     if (empty($link)) {
@@ -384,17 +373,22 @@ function PMA_DBI_insert_id($link = null)
             return false;
         }
     }
-    //$insert_id = mysql_insert_id($link);
-    // if the primary key is BIGINT we get an incorrect result
+    // If the primary key is BIGINT we get an incorrect result
     // (sometimes negative, sometimes positive)
     // and in the present function we don't know if the PK is BIGINT
     // so better play safe and use LAST_INSERT_ID()
     //
-    // by the way, no problem with mysqli_insert_id()
     return PMA_DBI_fetch_value('SELECT LAST_INSERT_ID();', 0, 0, $link);
 }
 
-function PMA_DBI_affected_rows($link = null)
+/**
+ * returns the number of rows affected by last query
+ *
+ * @param   resource  $link            the mysql object
+ * @param   bool      $get_from_cache
+ * @return  string|int
+ */
+function PMA_DBI_affected_rows($link = null, $get_from_cache = true)
 {
     if (empty($link)) {
         if (isset($GLOBALS['userlink'])) {
@@ -403,37 +397,77 @@ function PMA_DBI_affected_rows($link = null)
             return false;
         }
     }
-    return mysql_affected_rows($link);
+
+    if ($get_from_cache) {
+        return $GLOBALS['cached_affected_rows'];
+    } else {
+        return mysql_affected_rows($link);
+    }
 }
 
 /**
- * @todo add missing keys like in from mysqli_query (orgname, orgtable, flags, decimals)
+ * returns metainfo for fields in $result
+ *
+ * @todo add missing keys like in mysqli_query (decimals)
+ * @param   resource  $result
+ * @return  array  meta info for fields in $result
  */
 function PMA_DBI_get_fields_meta($result)
 {
     $fields       = array();
     $num_fields   = mysql_num_fields($result);
     for ($i = 0; $i < $num_fields; $i++) {
-        $fields[] = mysql_fetch_field($result, $i);
+        $field = mysql_fetch_field($result, $i);
+        $field->flags = mysql_field_flags($result, $i);
+        $field->orgtable = mysql_field_table($result, $i);
+        $field->orgname = mysql_field_name($result, $i);
+        $fields[] = $field;
     }
     return $fields;
 }
 
+/**
+ * return number of fields in given $result
+ *
+ * @param   resource  $result
+ * @return  int  field count
+ */
 function PMA_DBI_num_fields($result)
 {
     return mysql_num_fields($result);
 }
 
+/**
+ * returns the length of the given field $i in $result
+ *
+ * @param   resource  $result
+ * @param   int       $i       field
+ * @return  int  length of field
+ */
 function PMA_DBI_field_len($result, $i)
 {
     return mysql_field_len($result, $i);
 }
 
+/**
+ * returns name of $i. field in $result
+ *
+ * @param   resource  $result
+ * @param   int       $i       field
+ * @return  string  name of $i. field in $result
+ */
 function PMA_DBI_field_name($result, $i)
 {
     return mysql_field_name($result, $i);
 }
 
+/**
+ * returns concatenated string of human readable field flags
+ *
+ * @param   resource  $result
+ * @param   int       $i       field
+ * @return  string  field flags
+ */
 function PMA_DBI_field_flags($result, $i)
 {
     return mysql_field_flags($result, $i);

@@ -9,8 +9,7 @@
  * Check for all the needed functions for output buffering
  * Make some wrappers for the top and bottoms of our files.
  *
- * @version $Id: ob.lib.php 13104 2009-11-05 10:00:51Z lem9 $
- * @package phpMyAdmin
+ * @package PhpMyAdmin
  */
 
 /**
@@ -18,10 +17,6 @@
  * because both header and footer functions must know what each other is
  * doing.
  *
- * @uses    $cfg['OBGzip']
- * @uses    function_exists()
- * @uses    ini_get()
- * @uses    ob_get_level()
  * @staticvar integer remember last calculated value
  * @return  integer  the output buffer mode
  */
@@ -41,8 +36,6 @@ function PMA_outBufferModeGet()
             // any right frame file in phpMyAdmin will not be handled properly by
             // the browser. My fix was to check the ini file within the
             // PMA_outBufferModeGet() function.
-            //
-            // (Patch by Garth Gillespie, modified by Marc Delisle)
             $mode = 0;
         } elseif (function_exists('ob_get_level') && ob_get_level() > 0) {
             // If output buffering is enabled in php.ini it's not possible to
@@ -69,11 +62,6 @@ function PMA_outBufferModeGet()
  * output buffering is turned on.  It also needs to be passed $mode from
  * the PMA_outBufferModeGet() function or it will be useless.
  *
- * @uses    PMA_outBufferModeGet()
- * @uses    PMA_outBufferPost() to register it as shutdown function
- * @uses    ob_start()
- * @uses    header() to send X-ob_mode:
- * @uses    register_shutdown_function() to register PMA_outBufferPost()
  */
 function PMA_outBufferPre()
 {
@@ -92,9 +80,6 @@ function PMA_outBufferPre()
  * buffering is turned on.  It also needs to be passed $mode from the
  * PMA_outBufferModeGet() function or it will be useless.
  *
- * @uses    PMA_outBufferModeGet()
- * @uses    ob_flush()
- * @uses    flush()
  */
 function PMA_outBufferPost()
 {

@@ -2,8 +2,7 @@
 /* vim: set expandtab sw=4 ts=4 sts=4: */
 /**
 *
-* @version $Id: uploadprogress.php 13193 2009-12-30 13:28:30Z lem9 $
-* @package phpMyAdmin
+* @package PhpMyAdmin
 */
 if (! defined('PHPMYADMIN')) {
     exit;
@@ -11,14 +10,23 @@ if (! defined('PHPMYADMIN')) {
 
 $ID_KEY = "UPLOAD_IDENTIFIER";
 
-function PMA_getUploadStatus($id) {
+/**
+ * Returns upload status.
+ *
+ * This is implementation for uploadprogress extension.
+ *
+ * @param string $id
+ * @return array|null
+ */
+function PMA_getUploadStatus($id)
+{
     global $SESSION_KEY;
     global $ID_KEY;
-  
+
     if (trim($id) == "") {
-        return;
+        return null;
     }
-  
+
     if (! array_key_exists($id, $_SESSION[$SESSION_KEY])) {
         $_SESSION[$SESSION_KEY][$id] = array(
                     'id'       => $id,
@@ -26,15 +34,15 @@ function PMA_getUploadStatus($id) {
                     'percent'  => 0,
                     'total'    => 0,
                     'complete' => 0,
-		            'plugin'   => $ID_KEY
+                    'plugin'   => $ID_KEY
         );
     }
     $ret = $_SESSION[$SESSION_KEY][$id];
-    
+
     if (! PMA_import_uploadprogressCheck() || $ret['finished']) {
         return $ret;
     }
-    
+
     $status = uploadprogress_get_info($id);
 
     if ($status) {
@@ -45,7 +53,7 @@ function PMA_getUploadStatus($id) {
         }
         $ret['total']    = $status['bytes_total'];
         $ret['complete'] = $status['bytes_uploaded'];
- 
+
         if ($ret['total'] > 0) {
             $ret['percent'] = $ret['complete'] / $ret['total'] * 100;
         }
@@ -59,9 +67,9 @@ function PMA_getUploadStatus($id) {
                     'plugin'   => $ID_KEY
                 );
     }
-    
+
     $_SESSION[$SESSION_KEY][$id] = $ret;
-    
+
     return $ret;
 }
 ?>
