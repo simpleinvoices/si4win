@@ -1,0 +1,7 @@
+[Sun May 05 14:56:43 2013] [notice] Apache/2.2.21 (Win32) PHP/5.2.17 configured -- resuming normal operations
+[Sun May 05 14:56:43 2013] [notice] Server built: Sep  9 2011 10:26:10
+[Sun May 05 14:56:43 2013] [notice] Parent: Created child process 5124
+[Sun May 05 14:56:43 2013] [notice] Child 5124: Child process is running
+[Sun May 05 14:56:43 2013] [notice] Child 5124: Acquired the start mutex.
+[Sun May 05 14:56:43 2013] [notice] Child 5124: Starting 64 worker threads.
+[Sun May 05 14:56:43 2013] [notice] Child 5124: Starting thread to listen on port 8877.
