@@ -1,6 +1,4 @@
 apache/conf/httpd.conf
-apache/logs/error.log
-apache/logs/httpd.pid
 mysql/my.ini
 php/php.ini
 mysql/data/simple_invoices/*
