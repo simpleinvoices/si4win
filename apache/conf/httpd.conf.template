@@ -238,7 +238,7 @@ DocumentRoot "!TEAMMCPATH!\www"
 # is requested.
 #
 <IfModule dir_module>
-    DirectoryIndex index.html index.php
+    DirectoryIndex index.php index.html 
 </IfModule>
 
 #
